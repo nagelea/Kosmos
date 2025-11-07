@@ -20,9 +20,10 @@
 
 ## Project Status Dashboard
 
-**Current Phase**: Phase 1 Complete ✅
+**Current Phase**: Phase 2 In Progress 🔄 (47% complete - see checkpoint)
 **Last Updated**: 2025-11-07
-**Overall Progress**: 12% (Phases 0-1 complete: 51/285 tasks)
+**Overall Progress**: ~14% (51 + 15 Phase 2 = 66/285 tasks)
+**Checkpoint**: docs/PHASE_2_CHECKPOINT_2025-11-07.md
 
 ---
 
@@ -123,21 +124,22 @@
 ---
 
 ## Phase 2: Knowledge & Literature System
-**Status**: ⬜ Not Started | **Progress**: 0/5 tasks
+**Status**: 🔄 In Progress | **Progress**: 15/32 tasks (47%)
+**Checkpoint**: docs/PHASE_2_CHECKPOINT_2025-11-07.md
 
 ### 2.1 Literature API Integration
-- [ ] Implement arXiv API client (`kosmos/literature/arxiv_client.py`)
-- [ ] Implement Semantic Scholar API client
-- [ ] Implement PubMed API client
-- [ ] Add PDF download and text extraction capability
-- [ ] Create unified literature search interface
-- [ ] Add caching for API responses
-- [ ] Write integration tests
+- [x] Implement arXiv API client (`kosmos/literature/arxiv_client.py`)
+- [x] Implement Semantic Scholar API client
+- [x] Implement PubMed API client
+- [x] Add PDF download and text extraction capability
+- [x] Create unified literature search interface
+- [x] Add caching for API responses
+- [ ] Write integration tests <!-- Deferred: see checkpoint -->
 
 **Key Files**: `kosmos/literature/arxiv_client.py`, `kosmos/literature/semantic_scholar.py`, `kosmos/literature/pubmed.py`
 
 ### 2.2 Literature Analyzer Agent
-- [ ] Create `LiteratureAnalyzerAgent` class
+- [ ] Create `LiteratureAnalyzerAgent` class <!-- Not started: see checkpoint -->
 - [ ] Implement paper summarization using Claude
 - [ ] Add key findings extraction
 - [ ] Create methodology extraction logic
@@ -148,19 +150,19 @@
 **Key Files**: `kosmos/agents/literature_analyzer.py`
 
 ### 2.3 Vector Database for Semantic Search
-- [ ] Choose and set up vector database (Pinecone, Weaviate, or ChromaDB)
-- [ ] Implement embedding generation for papers
-- [ ] Create semantic search capability
-- [ ] Add similarity scoring
-- [ ] Implement batch embedding for large corpora
-- [ ] Create vector DB CRUD operations
+- [x] Choose and set up vector database (ChromaDB selected)
+- [x] Implement embedding generation for papers (SPECTER)
+- [x] Create semantic search capability
+- [x] Add similarity scoring
+- [x] Implement batch embedding for large corpora
+- [x] Create vector DB CRUD operations
 
 **Key Files**: `kosmos/knowledge/vector_db.py`, `kosmos/knowledge/embeddings.py`
 
 ### 2.4 Knowledge Graph
-- [ ] Design knowledge graph schema (concepts, methods, relationships)
-- [ ] Choose graph database (NetworkX for simple, Neo4j for advanced)
-- [ ] Implement concept extraction from papers
+- [x] Design knowledge graph schema (concepts, methods, relationships)
+- [x] Choose graph database (Neo4j selected with Docker)
+- [ ] Implement concept extraction from papers <!-- Next: see checkpoint -->
 - [ ] Create relationship detection between concepts
 - [ ] Add knowledge graph query interface
 - [ ] Implement graph visualization
@@ -168,7 +170,7 @@
 **Key Files**: `kosmos/knowledge/graph.py`, `kosmos/knowledge/graph_builder.py`
 
 ### 2.5 Citation & Reference Management
-- [ ] Create citation parser for different formats
+- [ ] Create citation parser for different formats <!-- Not started: see checkpoint -->
 - [ ] Implement reference deduplication
 - [ ] Add citation network building
 - [ ] Create bibliography generation

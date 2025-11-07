@@ -153,13 +153,39 @@ class LiteratureConfig(BaseSettings):
 
     semantic_scholar_api_key: Optional[str] = Field(
         default=None,
-        description="Semantic Scholar API key",
+        description="Semantic Scholar API key (optional, increases rate limits)",
         alias="SEMANTIC_SCHOLAR_API_KEY"
     )
     pubmed_api_key: Optional[str] = Field(
         default=None,
-        description="PubMed API key",
+        description="PubMed API key (optional, increases rate limits)",
         alias="PUBMED_API_KEY"
+    )
+    pubmed_email: Optional[str] = Field(
+        default=None,
+        description="Email for PubMed E-utilities (recommended)",
+        alias="PUBMED_EMAIL"
+    )
+    cache_ttl_hours: int = Field(
+        default=48,
+        ge=1,
+        le=168,
+        description="Literature API cache TTL in hours (24-168)",
+        alias="LITERATURE_CACHE_TTL_HOURS"
+    )
+    max_results_per_query: int = Field(
+        default=100,
+        ge=1,
+        le=1000,
+        description="Maximum results per literature search query",
+        alias="MAX_RESULTS_PER_QUERY"
+    )
+    pdf_download_timeout: int = Field(
+        default=30,
+        ge=5,
+        le=120,
+        description="PDF download timeout in seconds",
+        alias="PDF_DOWNLOAD_TIMEOUT"
     )
 
     model_config = SettingsConfigDict(populate_by_name=True)
@@ -203,6 +229,45 @@ class VectorDBConfig(BaseSettings):
             if not self.pinecone_environment:
                 raise ValueError("PINECONE_ENVIRONMENT required when using Pinecone")
         return self
+
+    model_config = SettingsConfigDict(populate_by_name=True)
+
+
+class Neo4jConfig(BaseSettings):
+    """Neo4j knowledge graph configuration."""
+
+    uri: str = Field(
+        default="bolt://localhost:7687",
+        description="Neo4j connection URI",
+        alias="NEO4J_URI"
+    )
+    user: str = Field(
+        default="neo4j",
+        description="Neo4j username",
+        alias="NEO4J_USER"
+    )
+    password: str = Field(
+        default="kosmos-password",
+        description="Neo4j password",
+        alias="NEO4J_PASSWORD"
+    )
+    database: str = Field(
+        default="neo4j",
+        description="Neo4j database name",
+        alias="NEO4J_DATABASE"
+    )
+    max_connection_lifetime: int = Field(
+        default=3600,
+        ge=60,
+        description="Max connection lifetime in seconds",
+        alias="NEO4J_MAX_CONNECTION_LIFETIME"
+    )
+    max_connection_pool_size: int = Field(
+        default=50,
+        ge=1,
+        description="Max connection pool size",
+        alias="NEO4J_MAX_CONNECTION_POOL_SIZE"
+    )
 
     model_config = SettingsConfigDict(populate_by_name=True)
 
@@ -337,6 +402,7 @@ class KosmosConfig(BaseSettings):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     literature: LiteratureConfig = Field(default_factory=LiteratureConfig)
     vector_db: VectorDBConfig = Field(default_factory=VectorDBConfig)
+    neo4j: Neo4jConfig = Field(default_factory=Neo4jConfig)
     safety: SafetyConfig = Field(default_factory=SafetyConfig)
     performance: PerformanceConfig = Field(default_factory=PerformanceConfig)
     monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
@@ -393,6 +459,7 @@ class KosmosConfig(BaseSettings):
             "logging": self.logging.model_dump(),
             "literature": self.literature.model_dump(),
             "vector_db": self.vector_db.model_dump(),
+            "neo4j": self.neo4j.model_dump(),
             "safety": self.safety.model_dump(),
             "performance": self.performance.model_dump(),
             "monitoring": self.monitoring.model_dump(),
