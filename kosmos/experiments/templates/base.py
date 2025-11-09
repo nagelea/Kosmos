@@ -8,6 +8,10 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any, Type
 from pydantic import BaseModel, Field
 from datetime import datetime
+import pkgutil
+import importlib
+import inspect
+from pathlib import Path
 
 from kosmos.models.experiment import (
     ExperimentProtocol,
@@ -352,8 +356,13 @@ class TemplateRegistry:
         ```
     """
 
-    def __init__(self):
-        """Initialize empty template registry."""
+    def __init__(self, auto_discover: bool = True):
+        """
+        Initialize template registry.
+
+        Args:
+            auto_discover: Automatically discover and register domain templates
+        """
         self._templates: Dict[str, TemplateBase] = {}
         self._templates_by_type: Dict[ExperimentType, List[str]] = {
             ExperimentType.COMPUTATIONAL: [],
@@ -362,23 +371,93 @@ class TemplateRegistry:
         }
         self._templates_by_domain: Dict[str, List[str]] = {}
 
-    def register(self, template: TemplateBase) -> None:
+        # Auto-discover templates from all domains
+        if auto_discover:
+            self._discover_templates()
+
+    def _discover_templates(self) -> None:
+        """
+        Auto-discover and register templates from domain directories.
+
+        Searches:
+        - kosmos.experiments.templates.biology
+        - kosmos.experiments.templates.neuroscience
+        - kosmos.experiments.templates.materials
+
+        Note: General templates (computational, data_analysis, literature_synthesis)
+        are already registered via their module-level register_template() calls,
+        so they are skipped here to avoid circular imports.
+        """
+        # Domain template packages to discover
+        template_packages = [
+            'kosmos.experiments.templates.biology',
+            'kosmos.experiments.templates.neuroscience',
+            'kosmos.experiments.templates.materials',
+        ]
+
+        discovered_count = 0
+
+        # Discover domain templates
+        for package_name in template_packages:
+            try:
+                package = importlib.import_module(package_name)
+
+                # Get all modules in this package
+                if hasattr(package, '__path__'):
+                    for importer, modname, ispkg in pkgutil.iter_modules(package.__path__):
+                        if modname == '__init__':
+                            continue
+
+                        # Import the module
+                        full_module_name = f"{package_name}.{modname}"
+                        try:
+                            module = importlib.import_module(full_module_name)
+
+                            # Find all TemplateBase subclasses in the module
+                            for name, obj in inspect.getmembers(module, inspect.isclass):
+                                if (issubclass(obj, TemplateBase) and
+                                    obj != TemplateBase and
+                                    obj.__module__ == full_module_name):
+
+                                    # Instantiate and register
+                                    try:
+                                        template_instance = obj()
+                                        self.register(template_instance, skip_validation=True)
+                                        discovered_count += 1
+                                    except Exception as e:
+                                        # Skip templates that fail to instantiate
+                                        pass
+
+                        except ImportError:
+                            # Skip modules that can't be imported
+                            pass
+
+            except ImportError:
+                # Package doesn't exist yet, skip
+                pass
+
+    def register(self, template: TemplateBase, skip_validation: bool = False) -> None:
         """
         Register a template in the registry.
 
         Args:
             template: Template to register
+            skip_validation: Skip template validation (for auto-discovery)
 
         Raises:
             ValueError: If template name already registered or template invalid
         """
         # Validate template
-        validation = template.validate_template()
-        if not validation.is_valid:
-            raise ValueError(f"Invalid template: {', '.join(validation.errors)}")
+        if not skip_validation:
+            validation = template.validate_template()
+            if not validation.is_valid:
+                raise ValueError(f"Invalid template: {', '.join(validation.errors)}")
 
-        # Check for duplicate name
+        # Check for duplicate name - silently skip if already registered during auto-discovery
         if template.metadata.name in self._templates:
+            if skip_validation:
+                # Already registered, skip silently during auto-discovery
+                return
             raise ValueError(f"Template '{template.metadata.name}' already registered")
 
         # Register template
@@ -554,18 +633,30 @@ class TemplateRegistry:
 
 # Global template registry instance
 _global_registry: Optional[TemplateRegistry] = None
+_auto_discovery_done: bool = False
 
 
-def get_template_registry() -> TemplateRegistry:
+def get_template_registry(trigger_auto_discovery: bool = True) -> TemplateRegistry:
     """
     Get the global template registry.
+
+    Args:
+        trigger_auto_discovery: Trigger auto-discovery of domain templates (default: True)
 
     Returns:
         Global TemplateRegistry instance
     """
-    global _global_registry
+    global _global_registry, _auto_discovery_done
+
     if _global_registry is None:
-        _global_registry = TemplateRegistry()
+        # Create registry WITHOUT auto-discovery to avoid circular imports
+        _global_registry = TemplateRegistry(auto_discover=False)
+
+    # Trigger auto-discovery once after general templates are loaded
+    if trigger_auto_discovery and not _auto_discovery_done:
+        _global_registry._discover_templates()
+        _auto_discovery_done = True
+
     return _global_registry
 
 
@@ -576,5 +667,5 @@ def register_template(template: TemplateBase) -> None:
     Args:
         template: Template to register
     """
-    registry = get_template_registry()
+    registry = get_template_registry(trigger_auto_discovery=False)
     registry.register(template)

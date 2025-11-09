@@ -63,6 +63,14 @@ from kosmos.knowledge.graph_visualizer import (
     reset_graph_visualizer
 )
 
+# Domain knowledge base (unified ontologies)
+from kosmos.knowledge.domain_kb import (
+    DomainKnowledgeBase,
+    Domain,
+    DomainConcept,
+    CrossDomainMapping
+)
+
 __all__ = [
     # Embeddings
     "PaperEmbedder",
@@ -96,4 +104,9 @@ __all__ = [
     "VisualizationMode",
     "get_graph_visualizer",
     "reset_graph_visualizer",
+    # Domain knowledge base
+    "DomainKnowledgeBase",
+    "Domain",
+    "DomainConcept",
+    "CrossDomainMapping",
 ]
