@@ -20,10 +20,11 @@
 
 ## Project Status Dashboard
 
-**Current Phase**: Phase 8 Complete ✅
+**Current Phase**: Phase 9 In Progress 🔄 (16% - see checkpoint)
 **Last Updated**: 2025-11-08
-**Overall Progress**: ~74% (3 + 6 + 32 + 21 + 23 + 28 + 44 + 24 + 30 = 211/285 tasks)
-**Completion Report**: docs/PHASE_8_COMPLETION.md
+**Overall Progress**: ~75% (211 + 5 = 216/285 tasks)
+**Checkpoint**: docs/PHASE_9_CHECKPOINT_2025-11-08.md
+**Previous Completion**: docs/PHASE_8_COMPLETION.md
 
 ---
 
@@ -497,47 +498,64 @@
 ---
 
 ## Phase 9: Multi-Domain Support
-**Status**: ⬜ Not Started | **Progress**: 0/4 tasks
+**Status**: 🔄 In Progress | **Progress**: 5/31 tasks (16%)
+**Checkpoint**: docs/PHASE_9_CHECKPOINT_2025-11-08.md
 
 **Note**: Reference domain roadmaps created in Phase 0.3 (`docs/domain-roadmaps/`) for methodology and tool guidance based on kosmos-figures repository analysis.
 
-### 9.1 Domain-Specific Tool Integrations
-- [ ] Research available APIs for biology (PDB, UniProt, NCBI)
-- [ ] Add physics simulation libraries (PyBullet, SimPy)
-- [ ] Integrate chemistry tools (RDKit, OpenBabel)
-- [ ] Add astronomy data sources (AstroPy)
-- [ ] Create social science data APIs
-- [ ] Implement tool discovery and registration
+### Core Infrastructure (✅ Complete)
+- [x] Update pyproject.toml with Phase 9 dependencies (pykegg, pydeseq2, pymatgen, etc.)
+- [x] Install and verify all dependencies
+- [x] Create domain models in `kosmos/models/domain.py` (~370 lines)
+- [x] Implement DomainRouter in `kosmos/core/domain_router.py` (~1,070 lines)
 
-**Key Files**: `kosmos/domains/biology/`, `kosmos/domains/physics/`, `kosmos/domains/chemistry/`
+### 9.1 Domain-Specific Tool Integrations
+- [x] Biology API clients: KEGG, GWAS, GTEx, ENCODE, dbSNP, Ensembl, HMDB, MetaboLights, UniProt, PDB (~660 lines)
+<!-- In progress: Biology analyzers - see PHASE_9_CHECKPOINT_2025-11-08.md -->
+- [ ] Biology analyzers: MetabolomicsAnalyzer, GenomicsAnalyzer
+- [ ] Neuroscience API clients (7 APIs): FlyWire, AllenBrain, MICrONS, GEO, AMPAD, OpenConnectome, WormBase
+- [ ] Neuroscience analyzers: ConnectomicsAnalyzer, NeurodegenerationAnalyzer
+- [ ] Materials API clients (5 APIs): MaterialsProject, NOMAD, AFLOW, Citrination, PerovskiteDB
+- [ ] Materials optimizer: MaterialsOptimizer
+
+**Key Files**: `kosmos/domains/biology/apis.py` ✅, `kosmos/domains/biology/metabolomics.py`, `kosmos/domains/biology/genomics.py`
 
 ### 9.2 Domain Knowledge Bases
-- [ ] Create domain ontology system
-- [ ] Add biology domain knowledge (genomics, proteomics)
-- [ ] Add physics domain knowledge (mechanics, thermodynamics)
-- [ ] Add chemistry domain knowledge (molecular structures, reactions)
-- [ ] Create domain-specific validation rules
-- [ ] Implement knowledge base updates from literature
+- [ ] Biology ontology module
+- [ ] Neuroscience ontology module
+- [ ] Materials ontology module
+- [ ] Unified domain knowledge base system (`kosmos/knowledge/domain_kb.py`)
+- [ ] Cross-domain concept mapping
+- [ ] Knowledge base updates from literature integration
 
-**Key Files**: `kosmos/knowledge/domain_kb.py`, `kosmos/knowledge/ontologies/`
+**Key Files**: `kosmos/domains/biology/ontology.py`, `kosmos/knowledge/domain_kb.py`
 
-### 9.3 Domain Detection & Routing
-- [ ] Implement domain classification from research questions
-- [ ] Create multi-domain hypothesis detection
-- [ ] Add domain-specific agent selection
-- [ ] Implement cross-domain synthesis
-- [ ] Create domain expertise assessment
+### 9.3 Domain Detection & Routing (✅ Complete)
+- [x] Implement domain classification from research questions
+- [x] Create multi-domain hypothesis detection
+- [x] Add domain-specific agent selection
+- [x] Implement cross-domain synthesis routing
+- [x] Create domain expertise assessment
 
-**Key Files**: `kosmos/core/domain_router.py`
+**Key Files**: `kosmos/core/domain_router.py` ✅
 
 ### 9.4 Domain-Specific Experiment Templates
-- [ ] Create biology experiment templates (sequence analysis, protein folding)
-- [ ] Add physics experiment templates (simulations, modeling)
-- [ ] Create chemistry templates (molecular dynamics, reaction prediction)
-- [ ] Add social science templates (data analysis, surveys)
-- [ ] Implement template selection logic
+- [ ] Biology templates: metabolomics_comparison, gwas_multimodal
+- [ ] Neuroscience templates: connectome_scaling, differential_expression
+- [ ] Materials templates: parameter_correlation, optimization, shap_analysis
+- [ ] Template registry enhancement for domain-specific discovery
 
-**Key Files**: `kosmos/experiments/templates/biology/`, `kosmos/experiments/templates/physics/`
+**Key Files**: `kosmos/experiments/templates/biology/`, `kosmos/experiments/templates/neuroscience/`, `kosmos/experiments/templates/materials/`
+
+### 9.5 Testing & Documentation
+- [ ] Domain router tests (~500 lines, 40 tests)
+- [ ] Biology domain tests (4 files, ~100 tests)
+- [ ] Neuroscience domain tests (4 files, ~85 tests)
+- [ ] Materials domain tests (3 files, ~85 tests)
+- [ ] Multi-domain integration tests (15 tests)
+- [ ] Create PHASE_9_COMPLETION.md
+
+**Key Files**: `tests/unit/core/test_domain_router.py`, `tests/unit/domains/`, `tests/integration/`
 
 ---
 
