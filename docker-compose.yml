@@ -1,9 +1,61 @@
 version: '3.8'
 
 services:
+  # PostgreSQL database for SQLAlchemy ORM
+  postgres:
+    image: postgres:15-alpine
+    container_name: kosmos-postgres
+    profiles: ["dev", "prod"]
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=kosmos
+      - POSTGRES_USER=kosmos
+      - POSTGRES_PASSWORD=kosmos-dev-password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8 --locale=C
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kosmos -d kosmos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - kosmos-network
+
+  # Redis cache for performance optimization
+  redis:
+    image: redis:7-alpine
+    container_name: kosmos-redis
+    profiles: ["dev", "prod"]
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+      --appendonly yes
+    volumes:
+      - ./redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - kosmos-network
+
+  # Neo4j graph database for knowledge graphs
   neo4j:
     image: neo4j:5.14-community
     container_name: kosmos-neo4j
+    profiles: ["dev", "prod"]
     ports:
       - "7474:7474"  # HTTP (Web UI)
       - "7687:7687"  # Bolt protocol
@@ -25,7 +77,51 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - kosmos-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # pgAdmin for PostgreSQL management (development only)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: kosmos-pgadmin
+    profiles: ["dev"]
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@kosmos.local
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+    volumes:
+      - ./pgadmin_data:/var/lib/pgadmin
+    restart: unless-stopped
+    networks:
+      - kosmos-network
+    depends_on:
+      - postgres
 
 networks:
-  default:
+  kosmos-network:
     name: kosmos-network
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  neo4j_data:
+    driver: local
+  neo4j_logs:
+    driver: local
+  neo4j_import:
+    driver: local
+  neo4j_plugins:
+    driver: local
+  pgadmin_data:
+    driver: local

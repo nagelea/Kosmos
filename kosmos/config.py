@@ -156,6 +156,66 @@ class DatabaseConfig(BaseSettings):
     model_config = SettingsConfigDict(populate_by_name=True)
 
 
+class RedisConfig(BaseSettings):
+    """Redis cache configuration."""
+
+    url: str = Field(
+        default="redis://localhost:6379/0",
+        description="Redis connection URL",
+        alias="REDIS_URL"
+    )
+    enabled: bool = Field(
+        default=False,
+        description="Enable Redis caching",
+        alias="REDIS_ENABLED"
+    )
+    max_connections: int = Field(
+        default=50,
+        ge=1,
+        le=1000,
+        description="Maximum connection pool size",
+        alias="REDIS_MAX_CONNECTIONS"
+    )
+    socket_timeout: int = Field(
+        default=5,
+        ge=1,
+        le=60,
+        description="Socket timeout in seconds",
+        alias="REDIS_SOCKET_TIMEOUT"
+    )
+    socket_connect_timeout: int = Field(
+        default=5,
+        ge=1,
+        le=60,
+        description="Socket connect timeout in seconds",
+        alias="REDIS_SOCKET_CONNECT_TIMEOUT"
+    )
+    retry_on_timeout: bool = Field(
+        default=True,
+        description="Retry on timeout",
+        alias="REDIS_RETRY_ON_TIMEOUT"
+    )
+    decode_responses: bool = Field(
+        default=True,
+        description="Decode responses as UTF-8 strings",
+        alias="REDIS_DECODE_RESPONSES"
+    )
+    default_ttl_seconds: int = Field(
+        default=3600,
+        ge=60,
+        le=86400,
+        description="Default cache TTL in seconds (1 minute to 24 hours)",
+        alias="REDIS_DEFAULT_TTL_SECONDS"
+    )
+
+    @property
+    def is_available(self) -> bool:
+        """Check if Redis is enabled and configured."""
+        return self.enabled and self.url is not None
+
+    model_config = SettingsConfigDict(populate_by_name=True)
+
+
 class LoggingConfig(BaseSettings):
     """Logging configuration."""
 
@@ -513,6 +573,7 @@ class KosmosConfig(BaseSettings):
     claude: ClaudeConfig = Field(default_factory=ClaudeConfig)
     research: ResearchConfig = Field(default_factory=ResearchConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
+    redis: RedisConfig = Field(default_factory=RedisConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     literature: LiteratureConfig = Field(default_factory=LiteratureConfig)
     vector_db: VectorDBConfig = Field(default_factory=VectorDBConfig)
@@ -570,6 +631,7 @@ class KosmosConfig(BaseSettings):
             "claude": self.claude.model_dump(),
             "research": self.research.model_dump(),
             "database": self.database.model_dump(),
+            "redis": self.redis.model_dump(),
             "logging": self.logging.model_dump(),
             "literature": self.literature.model_dump(),
             "vector_db": self.vector_db.model_dump(),

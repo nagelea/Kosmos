@@ -36,7 +36,8 @@ class ExecutionResult:
         stderr: str = "",
         error: Optional[str] = None,
         error_type: Optional[str] = None,
-        execution_time: float = 0.0
+        execution_time: float = 0.0,
+        profile_result: Optional[Any] = None  # ProfileResult from kosmos.core.profiling
     ):
         self.success = success
         self.return_value = return_value
@@ -45,10 +46,11 @@ class ExecutionResult:
         self.error = error
         self.error_type = error_type
         self.execution_time = execution_time
+        self.profile_result = profile_result
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
-        return {
+        result = {
             'success': self.success,
             'return_value': self.return_value,
             'stdout': self.stdout,
@@ -57,6 +59,15 @@ class ExecutionResult:
             'error_type': self.error_type,
             'execution_time': self.execution_time
         }
+
+        # Include profile data if available
+        if self.profile_result:
+            try:
+                result['profile_data'] = self.profile_result.model_dump()
+            except Exception:
+                result['profile_data'] = None
+
+        return result
 
 
 class CodeExecutor:
@@ -77,7 +88,9 @@ class CodeExecutor:
         retry_delay: float = 1.0,
         allowed_globals: Optional[Dict[str, Any]] = None,
         use_sandbox: bool = False,
-        sandbox_config: Optional[Dict[str, Any]] = None
+        sandbox_config: Optional[Dict[str, Any]] = None,
+        enable_profiling: bool = False,
+        profiling_mode: str = "light"
     ):
         """
         Initialize code executor.
@@ -88,12 +101,16 @@ class CodeExecutor:
             allowed_globals: Optional dictionary of allowed global variables
             use_sandbox: If True, use Docker sandbox for execution
             sandbox_config: Optional sandbox configuration (cpu_limit, memory_limit, timeout)
+            enable_profiling: If True, profile code execution (default: False)
+            profiling_mode: Profiling mode: light, standard, full (default: light)
         """
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.allowed_globals = allowed_globals or {}
         self.use_sandbox = use_sandbox
         self.sandbox_config = sandbox_config or {}
+        self.enable_profiling = enable_profiling
+        self.profiling_mode = profiling_mode
 
         # Initialize sandbox if requested
         self.sandbox = None
@@ -166,11 +183,22 @@ class CodeExecutor:
         code: str,
         local_vars: Optional[Dict[str, Any]] = None
     ) -> ExecutionResult:
-        """Execute code once with output capture."""
+        """Execute code once with output capture and optional profiling."""
 
         # Route to sandbox if enabled
         if self.use_sandbox:
             return self._execute_in_sandbox(code, local_vars)
+
+        # Initialize profiler if enabled
+        profiler = None
+        profile_result = None
+        if self.enable_profiling:
+            try:
+                from kosmos.core.profiling import ExecutionProfiler, ProfilingMode
+                mode = ProfilingMode(self.profiling_mode)
+                profiler = ExecutionProfiler(mode=mode)
+            except Exception as e:
+                logger.warning(f"Failed to initialize profiler: {e}")
 
         # Otherwise execute directly
         start_time = time.time()
@@ -184,9 +212,18 @@ class CodeExecutor:
         stderr_capture = io.StringIO()
 
         try:
+            # Start profiling if enabled
+            if profiler:
+                profiler._start_profiling()
+
             with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
                 # Execute code
                 exec(code, exec_globals, exec_locals)
+
+            # Stop profiling if enabled
+            if profiler:
+                profiler._stop_profiling()
+                profile_result = profiler.get_result()
 
             execution_time = time.time() - start_time
 
@@ -198,10 +235,19 @@ class CodeExecutor:
                 return_value=return_value,
                 stdout=stdout_capture.getvalue(),
                 stderr=stderr_capture.getvalue(),
-                execution_time=execution_time
+                execution_time=execution_time,
+                profile_result=profile_result
             )
 
         except Exception as e:
+            # Stop profiling even on error
+            if profiler:
+                try:
+                    profiler._stop_profiling()
+                    profile_result = profiler.get_result()
+                except Exception:
+                    pass
+
             execution_time = time.time() - start_time
 
             # Capture full traceback
@@ -215,7 +261,8 @@ class CodeExecutor:
                 stderr=stderr_capture.getvalue() + "\n" + error_traceback,
                 error=str(e),
                 error_type=type(e).__name__,
-                execution_time=execution_time
+                execution_time=execution_time,
+                profile_result=profile_result
             )
 
     def _execute_in_sandbox(
