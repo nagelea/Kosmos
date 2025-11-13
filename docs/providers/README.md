@@ -371,35 +371,47 @@ print(response.content)
 ## Comparison Guide
 
 ### When to use Anthropic (Claude)
-- ✅ Best structured output quality
-- ✅ Strong reasoning and analysis
-- ✅ Good at following complex instructions
-- ✅ Prompt caching saves costs
-- ❌ More expensive than OpenAI for simple tasks
+**Pros:**
+- Best structured output quality
+- Strong reasoning and analysis
+- Good at following complex instructions
+- Prompt caching saves costs
+
+**Cons:**
+- More expensive than OpenAI for simple tasks
 
 ### When to use OpenAI
-- ✅ Wide ecosystem and tooling
-- ✅ O1 models for complex reasoning
-- ✅ GPT-3.5 very fast and cheap
-- ✅ Good for code generation
-- ❌ No prompt caching (more expensive for repetitive tasks)
+**Pros:**
+- Wide ecosystem and tooling
+- O1 models for complex reasoning
+- GPT-3.5 very fast and cheap
+- Good for code generation
+
+**Cons:**
+- No prompt caching (more expensive for repetitive tasks)
 
 ### When to use Ollama/Local
-- ✅ Completely free
-- ✅ Full privacy (data never leaves machine)
-- ✅ Works offline
-- ✅ Good for experimentation
-- ❌ Requires powerful hardware
-- ❌ Slower than cloud APIs
-- ❌ Quality lower than top cloud models
+**Pros:**
+- Completely free
+- Full privacy (data never leaves machine)
+- Works offline
+- Good for experimentation
+
+**Cons:**
+- Requires powerful hardware
+- Slower than cloud APIs
+- Quality lower than top cloud models
 
 ### When to use OpenRouter
-- ✅ Access to 100+ models
-- ✅ Compare providers easily
-- ✅ Often cheaper than direct APIs
-- ✅ Single API key for everything
-- ❌ Additional layer (potential latency)
-- ❌ Rate limits can be stricter
+**Pros:**
+- Access to 100+ models
+- Compare providers easily
+- Often cheaper than direct APIs
+- Single API key for everything
+
+**Cons:**
+- Additional layer (potential latency)
+- Rate limits can be stricter
 
 ---
 

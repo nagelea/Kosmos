@@ -867,4 +867,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
 
 ---
 
-*Happy developing! 🚀*
+For questions or contributions, see the contributing guide or open an issue on GitHub.

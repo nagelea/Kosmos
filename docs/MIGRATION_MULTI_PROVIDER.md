@@ -16,15 +16,15 @@ Kosmos v0.2.0 adds support for multiple LLM providers (OpenAI, Ollama, etc.) whi
 
 ### What Stays the Same?
 
-✅ **Everything in your current setup:**
+**Everything in your current setup:**
 
-- ✅ Your `.env` file works unchanged
-- ✅ `ANTHROPIC_API_KEY` still works
-- ✅ `CLAUDE_MODEL` still works
-- ✅ `CLAUDE_*` environment variables still work
-- ✅ Claude Code CLI routing still works (all 9s API key)
-- ✅ All your existing code continues to work
-- ✅ Default provider is still Anthropic
+- Your `.env` file works unchanged
+- `ANTHROPIC_API_KEY` still works
+- `CLAUDE_MODEL` still works
+- `CLAUDE_*` environment variables still work
+- Claude Code CLI routing still works (all 9s API key)
+- All your existing code continues to work
+- Default provider is still Anthropic
 
 ### Do I Need to Update Anything?
 
@@ -59,7 +59,7 @@ OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4-turbo
 ```
 
-### If You Want to Try Local Models (Free!)
+### If You Want to Try Local Models (Free)
 
 ```bash
 # 1. Install Ollama: https://ollama.com/download
@@ -77,7 +77,7 @@ OPENAI_MODEL=llama3.1:70b
 
 ## Configuration Reference
 
-### Old Configuration (Still Works!)
+### Old Configuration (Still Works)
 
 ```bash
 # This configuration continues to work exactly as before
@@ -246,29 +246,29 @@ Even if you don't switch immediately, the new architecture provides:
 ## When to Consider Switching
 
 ### Stay with Anthropic/Claude if:
-- ✅ You value highest quality structured output
-- ✅ You use prompt caching (30%+ cost savings)
-- ✅ Your research needs Claude's reasoning capabilities
-- ✅ You're using Claude Code CLI (Max subscription)
+- You value highest quality structured output
+- You use prompt caching (30%+ cost savings)
+- Your research needs Claude's reasoning capabilities
+- You're using Claude Code CLI (Max subscription)
 
 ### Try OpenAI if:
-- ✅ You need O1 reasoning models
-- ✅ You want GPT-3.5's speed and low cost
-- ✅ Your team is already on OpenAI
-- ✅ You want wider ecosystem integration
+- You need O1 reasoning models
+- You want GPT-3.5's speed and low cost
+- Your team is already on OpenAI
+- You want wider ecosystem integration
 
 ### Try Local Models (Ollama) if:
-- ✅ You want completely free usage
-- ✅ Privacy is critical (sensitive research)
-- ✅ You need offline capability
-- ✅ You're experimenting or learning
-- ✅ You have powerful hardware (32GB+ RAM)
+- You want completely free usage
+- Privacy is critical (sensitive research)
+- You need offline capability
+- You're experimenting or learning
+- You have powerful hardware (32GB+ RAM)
 
 ### Try OpenRouter if:
-- ✅ You want access to 100+ models
-- ✅ You want to compare providers
-- ✅ You want single API key for everything
-- ✅ You want potentially lower costs
+- You want access to 100+ models
+- You want to compare providers
+- You want single API key for everything
+- You want potentially lower costs
 
 ---
 
@@ -285,5 +285,3 @@ Even if you don't switch immediately, the new architecture provides:
 **For 99% of existing users: Do nothing. Everything continues to work.**
 
 The multi-provider feature is opt-in. Your existing Anthropic/Claude setup is the default and requires zero changes. The new capabilities are there when you need them.
-
-Happy researching! 🚀

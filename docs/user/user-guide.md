@@ -284,7 +284,7 @@ Start research? [Y/n]: y
 
 5. **Research Execution**:
 ```
-🧪 Running Research
+Running Research
 
 Generating hypotheses...    ████████████████████ 100%
 Designing experiments...    ████████████████████ 100%
@@ -1153,4 +1153,4 @@ If you encounter issues:
 
 ---
 
-*Happy researching! 🧪🔬🚀*
+For questions or support, see the troubleshooting guide or open an issue on GitHub.

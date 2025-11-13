@@ -422,4 +422,4 @@ Example results structure:
 
 ---
 
-*Happy researching! 🧪🔬🚀*
+For questions or support, see the troubleshooting guide or open an issue on GitHub.

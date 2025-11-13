@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - 2025-11-13
 
-### Added - Multi-Provider LLM Support 🎉
+### Added - Multi-Provider LLM Support
 
-**Major Feature:** Kosmos now supports multiple LLM providers for maximum flexibility!
+**Major Feature:** Kosmos now supports multiple LLM providers for maximum flexibility.
 
 #### Supported Providers
 - **Anthropic Claude** (default) - API + CLI mode
@@ -59,11 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `openai>=1.0.0` for OpenAI provider support
 
 ### Backward Compatibility
-- ✅ **100% backward compatible** - No breaking changes
-- ✅ Existing `ANTHROPIC_API_KEY` and `CLAUDE_*` variables still work
-- ✅ Default provider remains Anthropic
-- ✅ `ClaudeClient` class maintained as alias
-- ✅ All existing code continues to work unchanged
+- **100% backward compatible** - No breaking changes
+- Existing `ANTHROPIC_API_KEY` and `CLAUDE_*` variables still work
+- Default provider remains Anthropic
+- `ClaudeClient` class maintained as alias
+- All existing code continues to work unchanged
 
 ### Commits
 - `35dc159` - Core multi-provider infrastructure (Phases 1-3, 5)
@@ -73,14 +73,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2025-11-06
 
-### Initial Production Release 🚀
+### Initial Production Release
 
 #### Major Features
 - **Autonomous Research Cycle** - End-to-end scientific workflow automation
 - **Multi-Domain Support** - Biology, physics, chemistry, neuroscience, materials science
 - **Claude Integration** - Powered by Claude Sonnet 4.5
 - **Agent-Based Architecture** - Modular agents for hypothesis, experiment design, analysis
-- **Beautiful CLI** - Rich terminal interface with 8 commands
+- **Command-line Interface** - Rich terminal interface with 8 commands
 - **Safety-First Design** - Sandboxed execution, validation, reproducibility
 
 #### Performance & Optimization (v1.0)
