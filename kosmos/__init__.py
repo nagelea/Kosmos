@@ -9,7 +9,7 @@ A fully autonomous AI scientist system that can:
 - Produce publication-quality research
 """
 
-__version__ = "0.10.0"  # Phase 10 - Optimization & Production
+__version__ = "0.2.0"  # Multi-provider support (Anthropic, OpenAI)
 __author__ = "Kosmos Development Team"
 __license__ = "MIT"
 

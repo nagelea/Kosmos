@@ -640,6 +640,24 @@ class DevelopmentConfig(BaseSettings):
     model_config = SettingsConfigDict(populate_by_name=True)
 
 
+def _optional_openai_config() -> Optional[OpenAIConfig]:
+    """Create OpenAIConfig only if OPENAI_API_KEY is set."""
+    import os
+    if os.getenv("OPENAI_API_KEY"):
+        return OpenAIConfig()
+    return None
+
+
+def _optional_anthropic_config() -> Optional[AnthropicConfig]:
+    """Create AnthropicConfig only if configured."""
+    import os
+    # Anthropic config is created by default via claude field
+    # This is for the anthropic alias field
+    if os.getenv("ANTHROPIC_API_KEY"):
+        return AnthropicConfig()
+    return None
+
+
 class KosmosConfig(BaseSettings):
     """
     Master configuration for Kosmos AI Scientist.
@@ -679,8 +697,8 @@ class KosmosConfig(BaseSettings):
 
     # Component configurations
     claude: ClaudeConfig = Field(default_factory=ClaudeConfig)  # Backward compatibility
-    anthropic: Optional[AnthropicConfig] = Field(default=None)  # New name (optional, defaults to claude)
-    openai: Optional[OpenAIConfig] = Field(default=None)  # OpenAI provider config
+    anthropic: Optional[AnthropicConfig] = Field(default_factory=_optional_anthropic_config)  # New name (optional, defaults to claude)
+    openai: Optional[OpenAIConfig] = Field(default_factory=_optional_openai_config)  # OpenAI provider config
     research: ResearchConfig = Field(default_factory=ResearchConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     redis: RedisConfig = Field(default_factory=RedisConfig)
@@ -699,6 +717,23 @@ class KosmosConfig(BaseSettings):
         case_sensitive=False,
         extra="ignore"
     )
+
+    @model_validator(mode="after")
+    def validate_provider_config(self):
+        """Validate that required API keys are set for the selected provider."""
+        if self.llm_provider == "openai":
+            if not self.openai or not self.openai.api_key:
+                raise ValueError(
+                    "OPENAI_API_KEY is required when LLM_PROVIDER=openai. "
+                    "Please set OPENAI_API_KEY in your environment or .env file."
+                )
+        elif self.llm_provider == "anthropic":
+            if not self.claude.api_key:
+                raise ValueError(
+                    "ANTHROPIC_API_KEY is required when LLM_PROVIDER=anthropic. "
+                    "Please set ANTHROPIC_API_KEY in your environment or .env file."
+                )
+        return self
 
     def create_directories(self):
         """Create necessary directories if they don't exist."""

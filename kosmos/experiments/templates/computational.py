@@ -100,7 +100,7 @@ class SimulationExperimentTemplate(TemplateBase):
             name="simulation_experiment",
             experiment_type=ExperimentType.COMPUTATIONAL,
             title="Simulation Experiment Template",
-            description="Test hypotheses using computational simulations.",
+            description="Test hypotheses using computational simulations and models.",
             version="1.0.0"
         )
         self.metadata.suitable_for = ["Monte Carlo simulations", "Agent-based models", "Physical simulations", "Stochastic processes"]

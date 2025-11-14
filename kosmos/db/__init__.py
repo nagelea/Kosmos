@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from kosmos.db.models import Base
 import logging
 from typing import Generator, Optional
+from contextlib import contextmanager
 
 
 logger = logging.getLogger(__name__)
@@ -104,6 +105,7 @@ def init_database(
     )
 
 
+@contextmanager
 def get_session() -> Generator[Session, None, None]:
     """
     Get database session (context manager).
