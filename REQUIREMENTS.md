@@ -1,6 +1,6 @@
 # Kosmos AI Scientist - Requirements Specification
 
-**Version:** 1.3 Draft
+**Version:** 1.4 Draft
 **Date:** 2025-11-20
 **Status:** In Review
 **Purpose:** Production readiness validation for Kosmos AI Scientist open-source implementation
@@ -146,7 +146,7 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-DAA-EXEC-008:** The system MAY support both containerized (Docker) and direct execution modes for testing and development.
 
-**REQ-DAA-EXEC-009:** 🚫 The sandbox MUST NOT allow code to spawn subprocesses or execute shell commands.
+**REQ-DAA-EXEC-009:** 🚫 The sandbox MUST NOT allow code to execute arbitrary shell commands. Spawning subprocesses SHOULD be restricted to a predefined allowlist of safe scientific tools required for domain analysis (e.g., statistical genetics tools that wrap R executables).
 
 **REQ-DAA-EXEC-010:** 🚫 The sandbox MUST NOT allow code to modify system environment variables visible to other processes.
 
@@ -166,11 +166,15 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-DAA-CAP-004:** The Data Analysis Agent MUST successfully perform regression analysis (linear, logistic, multivariate).
 
-**REQ-DAA-CAP-005:** The Data Analysis Agent SHOULD successfully perform advanced analyses (feature importance via SHAP, distribution fitting, segmented regression).
+**REQ-DAA-CAP-005:** The Data Analysis Agent MUST successfully perform advanced analyses (feature importance via SHAP, distribution fitting, segmented regression) as these methods are critical for reproducing paper discoveries.
 
-**REQ-DAA-CAP-006:** The Data Analysis Agent SHOULD successfully generate publication-quality visualizations (scatter plots, box plots, heatmaps, distribution plots).
+**REQ-DAA-CAP-006:** The Data Analysis Agent MUST successfully generate publication-quality visualizations (scatter plots, box plots, heatmaps, distribution plots) as the paper's discoveries rely heavily on generated visualizations.
 
 **REQ-DAA-CAP-007:** The system MUST validate analysis outputs for statistical validity (e.g., p-values in valid range, confidence intervals properly calculated).
+
+**REQ-DAA-CAP-008:** The Data Analysis Agent MUST successfully perform pathway enrichment analysis using standard biological databases and tools (e.g., gseapy), as this capability was essential for multiple discoveries highlighted in the paper (Discoveries 1 and 6).
+
+**REQ-DAA-CAP-009:** The Data Analysis Agent SHOULD be capable of defining novel composite metrics or proposing unconventional analytical methods relevant to the research objective (e.g., Mechanistic Ranking Score in Discovery 5, applying segmented regression in novel contexts), demonstrating advanced analytical autonomy.
 
 ---
 
@@ -182,7 +186,7 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-DAA-SUM-003:** The system MUST serialize complete analysis sessions (code + output + summary) into reproducible artifacts.
 
-**REQ-DAA-SUM-004:** Artifacts SHOULD be stored in executable notebook format (Jupyter .ipynb or equivalent) for human review.
+**REQ-DAA-SUM-004:** Artifacts MUST be stored in executable notebook format (Jupyter .ipynb or equivalent) for human review and traceability, as the paper states "each statement cites a Jupyter notebook."
 
 **REQ-DAA-SUM-005:** The system MUST assign unique, persistent identifiers to all generated artifacts.
 
@@ -220,7 +224,7 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-LSA-002:** The system MUST successfully connect to at least one literature database (PubMed, Semantic Scholar, or equivalent).
 
-**REQ-LSA-003:** The Literature Search Agent SHOULD retrieve full-text articles when available, falling back to abstracts when full text is unavailable.
+**REQ-LSA-003:** The Literature Search Agent MUST attempt to retrieve full-text articles when available, falling back to abstracts only when full text is unavailable, as the paper emphasizes reading "1,500 full-length scientific papers" per run.
 
 **REQ-LSA-004:** The system MUST parse retrieved documents (PDF, HTML, XML) into machine-readable text with >90% content preservation.
 
@@ -324,13 +328,21 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 ## 5. Orchestrator (Research Director) Requirements
 
-### 5.1 Workflow Lifecycle Management
+### 5.1 Discovery Cycle Architecture
+
+**REQ-ORCH-CYCLE-001:** The Orchestrator MUST implement a structured seven-phase discovery cycle that guides the research process: (1) Literature Search → (2) Hypothesis Generation → (3) Experiment Design → (4) Execution → (5) Analysis → (6) Refinement → (7) Convergence. This cycle structure enables coherent pursuit of research objectives across 200+ agent rollouts.
+
+**REQ-ORCH-SYN-001:** The Orchestrator MUST implement a synthesis mechanism that integrates findings from the World Model to generate novel, testable scientific hypotheses and propose strategic tasks for the next iteration. This mechanism is responsible for the intelligent planning that differentiates autonomous discovery from random exploration.
+
+---
+
+### 5.2 Workflow Lifecycle Management
 
 **REQ-ORCH-LIFE-001:** The Orchestrator MUST successfully initialize a research workflow from a research question and dataset.
 
 **REQ-ORCH-LIFE-002:** The Orchestrator MUST manage the complete lifecycle: Initialization → Task Planning → Agent Execution → Result Integration → World Model Update → Iteration.
 
-**REQ-ORCH-LIFE-003:** The Orchestrator MUST support pausing and resuming workflows without loss of state.
+**REQ-ORCH-LIFE-003:** The Orchestrator SHOULD support pausing and resuming workflows without loss of state (feature not described in research paper).
 
 **REQ-ORCH-LIFE-004:** The Orchestrator MUST detect workflow completion conditions (convergence, iteration limit, time limit, budget exhausted).
 
@@ -338,7 +350,7 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 ---
 
-### 5.2 Task Planning and Dispatch
+### 5.3 Task Planning and Dispatch
 
 **REQ-ORCH-TASK-001:** The Orchestrator MUST query the World Model to retrieve context for planning new tasks.
 
@@ -356,7 +368,7 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 ---
 
-### 5.3 Iteration and Convergence
+### 5.4 Iteration and Convergence
 
 **REQ-ORCH-ITER-001:** The Orchestrator MUST support multi-iteration research cycles where each iteration builds on previous results.
 
@@ -364,7 +376,7 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-ORCH-ITER-003:** The Orchestrator MUST track iteration count and enforce maximum iteration limits.
 
-**REQ-ORCH-ITER-004:** The Orchestrator SHOULD implement convergence detection based on diminishing new discoveries or hypothesis confidence.
+**REQ-ORCH-ITER-004:** The Orchestrator MUST implement convergence detection based on diminishing new discoveries or hypothesis confidence to enable autonomous termination as described in "once Kosmos believes it has completed the research objective."
 
 **REQ-ORCH-ITER-005:** The Orchestrator MUST log the reason for workflow termination (convergence, iteration limit, error, manual stop).
 
@@ -376,7 +388,7 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 ---
 
-### 5.4 Error Handling and Recovery
+### 5.5 Error Handling and Recovery
 
 **REQ-ORCH-ERR-001:** The Orchestrator MUST handle individual agent failures without terminating the entire workflow.
 
@@ -392,9 +404,11 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-ORCH-ERR-007:** 🚫 The system MUST NOT execute contradictory or mutually exclusive tasks simultaneously.
 
+**REQ-ORCH-ERR-008:** When an analysis task fails for technical reasons (e.g., tool unavailability, data incompatibility), the Orchestrator SHOULD attempt to identify and execute alternative analytical approaches to achieve the task objective, demonstrating analytical resilience as shown in the paper's Discovery 4 (pivoting from colocalization to SuSiE fine-mapping).
+
 ---
 
-### 5.5 Resource Management
+### 5.6 Resource Management
 
 **REQ-ORCH-RES-001:** The Orchestrator MUST track API usage (LLM calls, literature API calls) and enforce budget limits.
 
@@ -430,7 +444,7 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 ### 6.3 Parallel Execution
 
-**REQ-INT-PAR-001:** The system SHOULD support executing up to 10 independent agent tasks in parallel (as mentioned in paper).
+**REQ-INT-PAR-001:** The system MUST support executing up to 10 independent agent tasks in parallel per discovery cycle, as explicitly stated in the paper: "In each cycle, Kosmos executes up to ten literature search and analysis tasks."
 
 **REQ-INT-PAR-002:** Parallel execution MUST NOT cause data corruption in the World Model.
 
@@ -470,7 +484,7 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 ### 7.3 Report Generation
 
-**REQ-OUT-RPT-001:** The system MUST generate a final research report summarizing the workflow's discoveries.
+**REQ-OUT-RPT-001:** The system MUST generate one or more scientific reports summarizing the workflow's discoveries, with support for multiple discovery narratives within or across reports as described in the paper's "three or four scientific reports" output.
 
 **REQ-OUT-RPT-002:** The report MUST include sections for: research objective, hypotheses generated, analyses performed, key findings, and conclusions.
 
@@ -479,6 +493,28 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 **REQ-OUT-RPT-004:** The report SHOULD be generated in a publication-ready format (Markdown, PDF, or LaTeX).
 
 **REQ-OUT-RPT-005:** The report MUST include a complete provenance section mapping all claims to source artifacts.
+
+**REQ-OUT-RPT-006:** The system MUST support generating 3-4 distinct scientific reports from a single research workflow, each focusing on a coherent discovery narrative as demonstrated in the paper.
+
+**REQ-OUT-RPT-007:** Each discovery narrative in a report SHOULD contain approximately 25 factual claims based on 8-9 agent trajectories, providing appropriate depth and evidence backing.
+
+**REQ-OUT-RPT-008:** Each discovery narrative SHOULD reference 5-10 distinct agent trajectories as supporting evidence to ensure findings are well-substantiated.
+
+**REQ-OUT-RPT-009:** Discovery narratives SHOULD contain 20-30 factual claims with complete provenance to source trajectories, balancing comprehensiveness with readability.
+
+---
+
+### 7.4 Discovery Narrative Identification
+
+**REQ-OUT-DISC-001:** The system MUST implement a mechanism to identify distinct, coherent discovery narratives from the accumulated findings in the Structured World Model, enabling the synthesis of focused discovery reports.
+
+---
+
+### 7.5 Statement Classification
+
+**REQ-OUT-CLASS-001:** The system MUST classify each claim in generated reports into one of three categories: (1) data analysis-derived, (2) literature-derived, or (3) interpretation/synthesis, as these categories have different accuracy characteristics.
+
+**REQ-OUT-CLASS-002:** Report provenance MUST indicate the statement type for each claim to enable type-specific accuracy validation as performed in the paper's evaluation (85.5% for data analysis, 82.1% for literature, 57.9% for interpretation).
 
 ---
 
@@ -530,9 +566,9 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-PERF-STAB-002:** The system MUST successfully complete workflows with up to 20 iterations.
 
-**REQ-PERF-STAB-003:** The system MUST handle up to 200 agent rollouts (executions) per workflow without performance degradation.
+**REQ-PERF-STAB-003:** The system MUST handle at least 200 agent rollouts (executions) per workflow without performance degradation, as the paper demonstrates an average of 202 rollouts (166 data analysis + 36 literature).
 
-**REQ-PERF-STAB-004:** The system MUST maintain >99% uptime during workflow execution (excluding external API failures).
+**REQ-PERF-STAB-004:** The system SHOULD maintain high stability during workflow execution (excluding external API failures). Note: Kosmos is a batch research process, not a continuously available service requiring uptime SLAs.
 
 ---
 
@@ -566,6 +602,12 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-PERF-RES-009:** The system SHOULD track and report agent rollout counts (data analysis, literature review) per research cycle for performance benchmarking.
 
+**REQ-PERF-SCALE-001:** The system MUST demonstrate the capability to execute at least 40,000 lines of code across multiple agent rollouts in a single research workflow, as demonstrated in the paper with an average of 42,000 lines.
+
+**REQ-PERF-SCALE-002:** The system MUST demonstrate the capability to process at least 1,000 full-text scientific papers in a single research workflow, as demonstrated in the paper with an average of 1,500 papers.
+
+**REQ-PERF-SCALE-003:** The system MUST support at least 150 data analysis agent rollouts per workflow without performance degradation, as demonstrated in the paper with an average of 166 rollouts.
+
 ---
 
 ## 10. Scientific Validity Requirements
@@ -598,7 +640,7 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-SCI-ANA-005:** 🚫 The system MUST NOT perform statistical tests on data that grossly violates test assumptions (e.g., t-test on heavily skewed non-normal data with small n).
 
-**REQ-SCI-ANA-006:** 🚫 The system MUST NOT report p-values without accompanying effect sizes and confidence intervals.
+**REQ-SCI-ANA-006:** 🚫 The system MUST report effect sizes alongside p-values, and SHOULD report confidence intervals when applicable. Note: The paper itself reports p-values without CIs in some visualizations.
 
 **REQ-SCI-ANA-007:** 🚫 The system MUST NOT cherry-pick analyses or report only statistically significant results - all performed analyses MUST be documented.
 
@@ -628,7 +670,25 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-SCI-VAL-002:** When tested on benchmark problems, the system SHOULD reach scientifically correct conclusions >80% of the time.
 
-**REQ-SCI-VAL-003:** The system MUST NOT generate demonstrably false conclusions (validated by expert review).
+**REQ-SCI-VAL-004:** When evaluated by domain experts, the system MUST achieve >75% overall accuracy across all statement types in generated reports, based on the paper's demonstrated 79.4% overall accuracy.
+
+**REQ-SCI-VAL-005:** Data analysis-based statements MUST achieve >80% accuracy when independently validated by domain experts, based on the paper's demonstrated 85.5% accuracy for data analysis statements.
+
+**REQ-SCI-VAL-006:** Literature review-based statements MUST achieve >75% accuracy when validated against primary sources, based on the paper's demonstrated 82.1% accuracy for literature statements.
+
+**REQ-SCI-VAL-007:** The system MUST track accuracy by statement type (data analysis, literature synthesis, interpretation) and report these metrics separately, as interpretation statements are expected to have lower accuracy (~58%) compared to data analysis or literature statements.
+
+---
+
+### 10.5 Performance Metrics and Benchmarking
+
+**REQ-SCI-METRIC-001:** The system SHOULD provide metrics estimating the equivalent expert time represented by the work performed (e.g., papers read × 15 minutes/paper + analyses × 2 hours/analysis), as the paper reports Kosmos performs work equivalent to 6 months of expert time.
+
+**REQ-SCI-METRIC-002:** The system SHOULD track the cumulative expert-equivalent time across discovery iterations to demonstrate scaling of research output with runtime.
+
+**REQ-SCI-EVAL-001:** The system SHOULD provide mechanisms for assessing the novelty of generated findings (e.g., comparing against training data cutoff, literature corpus) as the paper evaluates discoveries on moderate to complete novelty.
+
+**REQ-SCI-EVAL-002:** The system SHOULD provide mechanisms for assessing the reasoning depth of generated findings (e.g., number of inferential steps, cross-domain synthesis) as the paper evaluates discoveries on high to moderate reasoning depth.
 
 ---
 
@@ -654,7 +714,7 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-SEC-DATA-003:** Artifacts containing sensitive data SHOULD be encrypted at rest.
 
-**REQ-SEC-DATA-004:** The system MUST comply with applicable data protection regulations (GDPR, HIPAA if handling relevant data).
+**REQ-SEC-DATA-004:** The system SHOULD comply with applicable data protection regulations (GDPR, HIPAA if handling relevant data) when deployed in production environments. Note: Regulatory compliance is a deployment concern not specified in the research paper.
 
 ---
 
@@ -736,33 +796,33 @@ This section documents known limitations explicitly acknowledged in the research
 
 ## Requirements Summary
 
-### Total Requirements: 271
+### Total Requirements: 293
 
 **By Priority Level:**
-- MUST/SHALL (Critical): 218 requirements (80.4%)
-- SHOULD (Recommended): 47 requirements (17.3%)
-- MAY (Optional): 6 requirements (2.2%)
+- MUST/SHALL (Critical): 234 requirements (79.9%)
+- SHOULD (Recommended): 53 requirements (18.1%)
+- MAY (Optional): 6 requirements (2.0%)
 
 **By Requirement Type:**
-- Positive Requirements (MUST DO): 215 requirements (79.3%)
-- Negative Requirements (MUST NOT): 56 requirements (20.7%)
+- Positive Requirements (MUST DO): 237 requirements (80.9%)
+- Negative Requirements (MUST NOT): 56 requirements (19.1%)
 
 **By Category:**
-- Core Infrastructure: 35 requirements (12.9%)
-- Data Analysis Agent: 46 requirements (17.0%)
-- Literature Search Agent: 13 requirements (4.8%)
-- Structured World Model: 27 requirements (10.0%)
-- Orchestrator: 34 requirements (12.5%)
-- Integration and Coordination: 12 requirements (4.4%)
-- Output and Traceability: 15 requirements (5.5%)
-- Domain and Data: 17 requirements (6.3%)
-- Performance and Scalability: 18 requirements (6.6%)
-- Scientific Validity: 22 requirements (8.1%)
-- Security and Safety: 15 requirements (5.5%)
-- Testing and Validation: 9 requirements (3.3%)
-- Documentation: 5 requirements (1.8%)
-- System Limitations: 5 requirements (1.8%)
-- Meta-Requirements: 3 requirements (1.1%)
+- Core Infrastructure: 35 requirements (11.9%)
+- Data Analysis Agent: 48 requirements (16.4%)
+- Literature Search Agent: 13 requirements (4.4%)
+- Structured World Model: 27 requirements (9.2%)
+- Orchestrator: 37 requirements (12.6%)
+- Integration and Coordination: 12 requirements (4.1%)
+- Output and Traceability: 22 requirements (7.5%)
+- Domain and Data: 17 requirements (5.8%)
+- Performance and Scalability: 21 requirements (7.2%)
+- Scientific Validity: 29 requirements (9.9%)
+- Security and Safety: 15 requirements (5.1%)
+- Testing and Validation: 9 requirements (3.1%)
+- Documentation: 5 requirements (1.7%)
+- System Limitations: 5 requirements (1.7%)
+- Meta-Requirements: 3 requirements (1.0%)
 
 ---
 
@@ -830,7 +890,7 @@ This appendix provides a quick reference to all negative requirements (MUST NOT 
 **REQ-DAA-GEN-005:** 🚫 No hard-coded credentials, absolute paths, or non-portable system calls in generated code
 **REQ-DAA-GEN-006:** 🚫 No `eval()` or `exec()` on untrusted input
 **REQ-DAA-GEN-007:** 🚫 No modification of global state or environment variables
-**REQ-DAA-EXEC-009:** 🚫 No subprocess spawning or shell command execution in sandbox
+**REQ-DAA-EXEC-009:** 🚫 No arbitrary shell commands; subprocess spawning restricted to allowlisted scientific tools
 **REQ-DAA-EXEC-010:** 🚫 No modification of system environment variables
 **REQ-DAA-EXEC-011:** 🚫 No execution if sandbox initialization fails
 **REQ-DAA-SAFE-004:** 🚫 No execution of code importing unauthorized modules (os.system, subprocess, socket)
@@ -859,9 +919,8 @@ This appendix provides a quick reference to all negative requirements (MUST NOT 
 **REQ-SCI-HYP-005:** 🚫 No hypotheses contradicting established physical laws without justification
 **REQ-SCI-HYP-006:** 🚫 No claiming causation from correlation without proper design
 **REQ-SCI-ANA-005:** 🚫 No statistical tests on data grossly violating assumptions
-**REQ-SCI-ANA-006:** 🚫 No p-values without effect sizes and confidence intervals
+**REQ-SCI-ANA-006:** 🚫 Report effect sizes with p-values; confidence intervals SHOULD be included when applicable
 **REQ-SCI-ANA-007:** 🚫 No cherry-picking or selective reporting of analyses
-**REQ-SCI-VAL-003:** 🚫 No demonstrably false conclusions
 **REQ-SCI-REPRO-005:** 🚫 No guaranteeing deterministic results - discovery process is inherently stochastic
 
 ### System Limitations & Constraints
@@ -936,6 +995,7 @@ This appendix provides a quick reference to all negative requirements (MUST NOT 
 | 1.1 Draft | 2025-11-20 | Updated | Added 41 negative requirements (MUST NOT) across all categories; Added Appendix A: Negative Requirements Index; Updated statistics (203→244 total requirements) |
 | 1.2 Draft | 2025-11-20 | Updated | Added 22 paper-specific requirements based on detailed Kosmos paper analysis: performance benchmarks (3), accuracy targets by statement type (4), dataset size limitations (3), stochastic behavior documentation (3), known system limitations (5), world model specifics (3), convergence override (1); Added Section 14: System Limitations and Constraints; Updated Appendix A with 6 new negative requirements; Updated statistics (244→266 total requirements) |
 | 1.3 Draft | 2025-11-20 | Updated | Added 5 critical requirements from second external validation: self-correction loop for autonomous code debugging (REQ-DAA-EXEC-012), literature processing throughput (REQ-LSA-013), metabolomics libraries (REQ-ENV-006), materials science libraries (REQ-ENV-007), explicit parallel task limit (REQ-ORCH-TASK-007); Elevated 2 requirements from SHOULD to MUST: genetics libraries (REQ-ENV-004) and prompt caching (REQ-LLM-007) for economic viability; Updated statistics (266→271 total requirements) |
+| 1.4 Draft | 2025-11-20 | Updated | **Major update from three external AI validations:** Removed 1 contradictory requirement (REQ-SCI-VAL-003 - impossible 100% accuracy); Added 23 new requirements: seven-phase discovery cycle (REQ-ORCH-CYCLE-001), hypothesis generation mechanism (REQ-ORCH-SYN-001), analytical pivoting on failure (REQ-ORCH-ERR-008), multi-report generation (REQ-OUT-RPT-006-009), discovery narrative identification (REQ-OUT-DISC-001), statement type classification (REQ-OUT-CLASS-001-002), specific scale targets (REQ-PERF-SCALE-001-003: 40K lines code, 1K papers, 150+ rollouts), accuracy benchmarks by statement type (REQ-SCI-VAL-004-007), expert time metrics (REQ-SCI-METRIC-001-002), novelty/depth assessment (REQ-SCI-EVAL-001-002), pathway analysis (REQ-DAA-CAP-008), novel analytical methods (REQ-DAA-CAP-009); Upgraded 6 requirements from SHOULD to MUST (parallel execution, convergence detection, advanced analysis, visualization, Jupyter notebooks, full-text retrieval); Downgraded 3 from MUST to SHOULD (uptime SLA, regulatory compliance, pause/resume) to align with research prototype scope; Modified 4 requirement texts for paper accuracy; Updated statistics (271→293 total requirements) |
 
 ---
 
