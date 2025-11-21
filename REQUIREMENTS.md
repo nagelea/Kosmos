@@ -1,6 +1,6 @@
 # Kosmos AI Scientist - Requirements Specification
 
-**Version:** 1.2 Draft
+**Version:** 1.3 Draft
 **Date:** 2025-11-20
 **Status:** In Review
 **Purpose:** Production readiness validation for Kosmos AI Scientist open-source implementation
@@ -40,9 +40,13 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-ENV-003:** The execution environment MUST include all required Python scientific computing libraries (numpy, pandas, scikit-learn) at minimum versions specified in dependencies.
 
-**REQ-ENV-004:** The execution environment SHOULD include specialized domain libraries (TwoSampleMR, coloc, susieR, gseapy) for extended functionality.
+**REQ-ENV-004:** The execution environment MUST include specialized domain libraries for genetic epidemiology (TwoSampleMR, coloc, susieR) as these are required to reproduce key discoveries from the reference implementation. The system SHOULD include gseapy for pathway enrichment analysis.
 
 **REQ-ENV-005:** The system MUST gracefully handle missing optional dependencies without terminating execution.
+
+**REQ-ENV-006:** The execution environment SHOULD include metabolomics processing libraries (xcms, pyopenms, or equivalents) for LC-MS data analysis to support metabolomics research workflows.
+
+**REQ-ENV-007:** The execution environment SHOULD include materials science libraries (pymatgen, ASE, or equivalents) for materials property analysis and crystallographic data processing.
 
 ---
 
@@ -60,7 +64,7 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-LLM-006:** The system MUST distinguish between different LLM output types (natural language, code blocks, structured data) with >95% accuracy.
 
-**REQ-LLM-007:** The system SHOULD implement prompt caching to reduce API costs for repeated operations.
+**REQ-LLM-007:** The system MUST implement prompt caching to reduce API costs for repeated operations during extended 12-hour research cycles. Without prompt caching, the cost of re-processing the growing World Model context for 200+ agent rollouts becomes economically prohibitive.
 
 **REQ-LLM-008:** 🚫 The system MUST NOT expose LLM API keys in logs, error messages, or output artifacts.
 
@@ -148,6 +152,8 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 
 **REQ-DAA-EXEC-011:** 🚫 The system MUST NOT proceed with code execution if the sandbox initialization fails or is unavailable (when sandboxing is required).
 
+**REQ-DAA-EXEC-012:** The Data Analysis Agent SHOULD implement a self-correction loop that analyzes stderr output and regenerates code when execution fails, with a maximum of 3 retry attempts per task.
+
 ---
 
 ### 2.3 Analysis Capabilities
@@ -233,6 +239,8 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 **REQ-LSA-011:** 🚫 The system MUST NOT rely solely on non-peer-reviewed sources (preprints, blog posts) as primary evidence for scientific claims.
 
 **REQ-LSA-012:** 🚫 The Literature Search Agent MUST NOT synthesize contradictory findings without explicitly noting the conflict and uncertainty.
+
+**REQ-LSA-013:** The Literature Search Agent SHALL process and index a minimum of 125 papers per hour to support the documented capability of reading 1,500 papers within a 12-hour research cycle.
 
 ---
 
@@ -343,6 +351,8 @@ This specification uses RFC 2119 key words to indicate requirement levels:
 **REQ-ORCH-TASK-005:** The Orchestrator MUST track the status of all dispatched tasks (pending, running, completed, failed).
 
 **REQ-ORCH-TASK-006:** The Orchestrator MUST enforce timeout limits on agent tasks and handle timeouts appropriately.
+
+**REQ-ORCH-TASK-007:** The Orchestrator SHALL support a configurable maximum parallel task limit with a default of 10 concurrent tasks as demonstrated in the reference implementation.
 
 ---
 
@@ -726,32 +736,32 @@ This section documents known limitations explicitly acknowledged in the research
 
 ## Requirements Summary
 
-### Total Requirements: 266
+### Total Requirements: 271
 
 **By Priority Level:**
-- MUST/SHALL (Critical): 214 requirements (80.5%)
-- SHOULD (Recommended): 46 requirements (17.3%)
-- MAY (Optional): 6 requirements (2.3%)
+- MUST/SHALL (Critical): 218 requirements (80.4%)
+- SHOULD (Recommended): 47 requirements (17.3%)
+- MAY (Optional): 6 requirements (2.2%)
 
 **By Requirement Type:**
-- Positive Requirements (MUST DO): 210 requirements (78.9%)
-- Negative Requirements (MUST NOT): 56 requirements (21.1%)
+- Positive Requirements (MUST DO): 215 requirements (79.3%)
+- Negative Requirements (MUST NOT): 56 requirements (20.7%)
 
 **By Category:**
-- Core Infrastructure: 33 requirements (12.4%)
-- Data Analysis Agent: 45 requirements (16.9%)
-- Literature Search Agent: 12 requirements (4.5%)
-- Structured World Model: 27 requirements (10.2%)
-- Orchestrator: 33 requirements (12.4%)
-- Integration and Coordination: 12 requirements (4.5%)
-- Output and Traceability: 15 requirements (5.6%)
-- Domain and Data: 17 requirements (6.4%)
-- Performance and Scalability: 18 requirements (6.8%)
-- Scientific Validity: 22 requirements (8.3%)
-- Security and Safety: 15 requirements (5.6%)
-- Testing and Validation: 9 requirements (3.4%)
-- Documentation: 5 requirements (1.9%)
-- System Limitations: 5 requirements (1.9%)
+- Core Infrastructure: 35 requirements (12.9%)
+- Data Analysis Agent: 46 requirements (17.0%)
+- Literature Search Agent: 13 requirements (4.8%)
+- Structured World Model: 27 requirements (10.0%)
+- Orchestrator: 34 requirements (12.5%)
+- Integration and Coordination: 12 requirements (4.4%)
+- Output and Traceability: 15 requirements (5.5%)
+- Domain and Data: 17 requirements (6.3%)
+- Performance and Scalability: 18 requirements (6.6%)
+- Scientific Validity: 22 requirements (8.1%)
+- Security and Safety: 15 requirements (5.5%)
+- Testing and Validation: 9 requirements (3.3%)
+- Documentation: 5 requirements (1.8%)
+- System Limitations: 5 requirements (1.8%)
 - Meta-Requirements: 3 requirements (1.1%)
 
 ---
@@ -925,6 +935,7 @@ This appendix provides a quick reference to all negative requirements (MUST NOT 
 | 1.0 Draft | 2025-11-20 | Initial | Complete requirements specification for review |
 | 1.1 Draft | 2025-11-20 | Updated | Added 41 negative requirements (MUST NOT) across all categories; Added Appendix A: Negative Requirements Index; Updated statistics (203→244 total requirements) |
 | 1.2 Draft | 2025-11-20 | Updated | Added 22 paper-specific requirements based on detailed Kosmos paper analysis: performance benchmarks (3), accuracy targets by statement type (4), dataset size limitations (3), stochastic behavior documentation (3), known system limitations (5), world model specifics (3), convergence override (1); Added Section 14: System Limitations and Constraints; Updated Appendix A with 6 new negative requirements; Updated statistics (244→266 total requirements) |
+| 1.3 Draft | 2025-11-20 | Updated | Added 5 critical requirements from second external validation: self-correction loop for autonomous code debugging (REQ-DAA-EXEC-012), literature processing throughput (REQ-LSA-013), metabolomics libraries (REQ-ENV-006), materials science libraries (REQ-ENV-007), explicit parallel task limit (REQ-ORCH-TASK-007); Elevated 2 requirements from SHOULD to MUST: genetics libraries (REQ-ENV-004) and prompt caching (REQ-LLM-007) for economic viability; Updated statistics (266→271 total requirements) |
 
 ---
 
