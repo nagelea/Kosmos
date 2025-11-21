@@ -851,6 +851,29 @@ Contributions are accepted. See [CONTRIBUTING.md](CONTRIBUTING.md) for guideline
 - Documentation
 - Testing
 
+## Open Implementation Questions
+
+Kosmos v0.2.0 implements the full autonomous research cycle, but several critical architectural challenges remain unsolved. We've documented these gaps and are seeking community input.
+
+### Critical Gaps
+
+**Gap 0: Context Compression Architecture** - How to compress accumulated research state across 200+ agent rollouts while preserving causal relationships and enabling coherent task planning.
+
+**Gap 1: State Manager Schema & Query Design** - Data structure and indexing strategy for sub-second context retrieval with 200+ concurrent agent accesses while maintaining referential integrity.
+
+**Gap 2: Task Generation Strategy** - Synthesis mechanism for identifying discovery narratives from accumulated findings and proposing high-value next tasks.
+
+For detailed technical analysis including severity assessments, implementation roadmap, and risk analysis, see [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md).
+
+### Seeking Expertise In:
+
+- Large-scale knowledge graph query optimization
+- Incremental summarization with provenance preservation
+- Multi-agent task coordination patterns
+- Production Neo4j deployment at scale
+
+**Contribute:** [GitHub Issues](https://github.com/jimmc414/Kosmos/issues) | [Discussions](https://github.com/jimmc414/Kosmos/discussions)
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
