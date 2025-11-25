@@ -41,13 +41,14 @@ Current (too vague):
 Better:
 "Open-source implementation of the Kosmos paper (Lu et al., 2024).
 The original paper demonstrated results but left 6 critical implementation
-details unspecified. This repository fills those gaps. All 6 gaps are now
-implemented. Next step: end-to-end testing and validation."
+details unspecified. This repository fills those gaps using patterns from
+the K-Dense ecosystem. All 6 gaps are now implemented.
+Next step: end-to-end integration testing."
 ```
 
 ### 2. Gap Implementation Section
 
-Create a section that honestly describes what the original paper omitted and how this implementation addresses it. Reference `OPEN_QUESTIONS.md` for the gap analysis.
+Create a section that documents what the original paper omitted and how this implementation addresses it. Reference `OPENQUESTIONS_SOLUTION.md` for the detailed gap analysis and solutions.
 
 **Structure:**
 ```markdown
@@ -55,7 +56,7 @@ Create a section that honestly describes what the original paper omitted and how
 
 The original Kosmos paper demonstrated results but left critical
 implementation details unspecified. This section documents what
-was missing and how we addressed each gap.
+was missing and how we addressed each gap using K-Dense ecosystem patterns.
 
 ### Gap 0: Context Compression (Complete)
 **Problem**: Paper processes 1,500 papers and 42,000 lines of code
@@ -82,7 +83,8 @@ optional knowledge graph integration. Implementation in
 tasks completely unstated.
 
 **Our solution**: Plan creation, review, novelty detection, and
-delegation pipeline. Implementation in `kosmos/orchestration/`.
+delegation pipeline. Exploration/exploitation ratio adjusts by cycle.
+Implementation in `kosmos/orchestration/`.
 
 **Pattern source**: kosmos-karpathy (orchestration patterns)
 
@@ -91,7 +93,7 @@ delegation pipeline. Implementation in `kosmos/orchestration/`.
 injection mechanisms not specified.
 
 **Our solution**: Skill loader with 566 domain-specific scientific
-prompts. Implementation in `kosmos/agents/skill_loader.py`.
+prompts auto-loaded by domain. Implementation in `kosmos/agents/skill_loader.py`.
 
 **Pattern source**: kosmos-claude-scientific-skills (566 skills)
 
@@ -100,8 +102,15 @@ prompts. Implementation in `kosmos/agents/skill_loader.py`.
 execution environment not described.
 
 **Our solution**: Docker-based Jupyter sandbox with container
-pooling, automatic package resolution, and security constraints.
+pooling, automatic package resolution, resource limits, and
+security constraints. This was the final gap to be implemented.
 Implementation in `kosmos/execution/`.
+
+Files:
+- `docker_manager.py` - Container lifecycle management
+- `jupyter_client.py` - Kernel gateway integration
+- `package_resolver.py` - Dependency detection and installation
+- `production_executor.py` - Unified execution interface
 
 ### Gap 5: Discovery Validation (Complete)
 **Problem**: Paper reports 57.9% interpretation accuracy but
@@ -126,18 +135,18 @@ that provide proven patterns for AI agent systems:
 | Package | Used For | Gap Addressed |
 |---------|----------|---------------|
 | kosmos-claude-skills-mcp | Context compression, progressive disclosure | Gap 0 |
-| kosmos-karpathy | Orchestration, multi-agent coordination | Gap 2 |
+| kosmos-karpathy | Orchestration, multi-agent coordination, plan creator/reviewer | Gap 2 |
 | kosmos-claude-scientific-skills | 566 domain-specific scientific prompts | Gap 3 |
 | kosmos-claude-scientific-writer | Validation patterns, ScholarEval framework | Gap 5 |
-| kosmos-agentic-data-scientist | Additional agent patterns | Various |
 
 These repositories are included in `kosmos-reference/` for reference
-during development.
+during development. The kosmos-claude-scientific-skills package is
+integrated as a git subtree at the project root.
 ```
 
 ### 4. Current State
 
-Be specific about what works and what is next:
+Be specific about what works and what is next. Reference the Production Readiness Report findings:
 
 ```markdown
 ## Current State
@@ -150,49 +159,58 @@ Be specific about what works and what is next:
 - Gap 4: Execution environment (Docker sandbox, container pooling, package resolution)
 - Gap 5: Validation (ScholarEval 8-dimension quality framework)
 
-**Next step: End-to-end testing**
-- Integration testing of all components working together
-- Multi-cycle research workflow validation
+**Test Results:**
+- 273 unit tests passing (core gap modules)
+- 7/7 smoke tests passing
+- Integration tests: 43 passing, some require API updates
+- E2E tests require Docker + API keys to run
+
+**Production Readiness: Partially Ready**
+The core research workflow (compression, state management, orchestration,
+validation) is functional and well-tested. Full production deployment
+requires:
+1. Docker installation for sandboxed code execution
+2. Environment configuration (.env file with API keys)
+3. Integration test updates to match current APIs
+
+**Next step: End-to-end integration testing**
+- Full workflow validation with Docker sandbox
+- Multi-cycle research workflow verification
 - Performance benchmarking
-- Production readiness verification
-
-**Not implemented:**
-- R language support (paper mentions R packages, we are Python-only)
-- Multi-language kernel switching
-- Cost optimization for LLM API usage
-
-**Test coverage:**
-- 339+ tests for gap implementation modules
-- Unit, integration, and E2E test suites
-- CI/CD pipeline configured
+- Production deployment verification
 ```
 
 ### 5. Honest Limitations
 
-Include a section on known limitations:
+Include a section on known limitations (from Production Readiness Report):
 
 ```markdown
 ## Limitations
 
 This implementation has known limitations:
 
-1. **End-to-end testing pending**: All components are implemented but
-   full workflow integration testing is the next phase.
+1. **Docker required**: The execution environment (Gap 4) requires Docker
+   for sandboxed code execution. Without Docker, code execution uses
+   mock implementations.
 
-2. **Python only**: The paper uses R packages for some analyses
+2. **Dependency compatibility**: The `arxiv` package fails to build on
+   Python 3.11+ due to `sgmllib3k` incompatibility. Literature search
+   features are limited without this package.
+
+3. **Python only**: The paper uses R packages for some analyses
    (MendelianRandomization, susieR). We do not support R.
 
-3. **LLM costs**: Running 20 research cycles with 10 tasks each
+4. **LLM costs**: Running 20 research cycles with 10 tasks each
    requires significant API usage. No cost optimization implemented.
 
-4. **Single-user**: No multi-tenancy or user isolation.
+5. **Single-user**: No multi-tenancy or user isolation.
 
-5. **Evaluation pending**: We have not reproduced the paper's
+6. **Evaluation pending**: We have not reproduced the paper's
    7 validated discoveries. This is an implementation, not a
    reproduction study.
 
-6. **Docker required**: The execution environment requires Docker
-   for sandboxed code execution.
+7. **Integration tests**: Some integration tests have API mismatches
+   with current implementation and need updates.
 ```
 
 ### 6. Getting Started
@@ -204,34 +222,41 @@ Keep this practical and honest:
 
 Requirements:
 - Python 3.11+
-- Anthropic API key (for production use)
+- Anthropic API key or OpenAI API key (for LLM access)
 - Docker (for sandboxed code execution)
 
 Installation:
+```bash
 git clone https://github.com/jimmc414/Kosmos.git
 cd Kosmos
 pip install -e .
+cp .env.example .env
+# Edit .env and set ANTHROPIC_API_KEY or OPENAI_API_KEY
+```
 
-Run tests to verify installation:
+Run smoke tests to verify installation:
+```bash
+python scripts/smoke_test.py
+```
+
+Run unit tests for gap modules:
+```bash
 pytest tests/unit/compression/ tests/unit/orchestration/ \
        tests/unit/validation/ tests/unit/workflow/ \
-       tests/unit/execution/ -v
+       tests/unit/agents/test_skill_loader.py \
+       tests/unit/world_model/test_artifacts.py -v
+```
 
 See GETTING_STARTED.md for detailed usage examples.
 ```
 
-### 7. Remove or Tone Down
+### 7. Badges to Update
 
-**Current badges that may need adjustment:**
-- Version badges are fine
-- Update status badge to reflect 6/6 gaps complete
-- "Status: alpha" is honest, keep it
+Update badges to reflect current state:
+- Change "gaps-5/6 complete" to "gaps-6/6 complete"
+- Keep "status-alpha" (honest)
+- Keep "tests-339 passing" or update if changed
 - Remove any badges that make unsubstantiated claims
-
-**Sections to review:**
-- "Implemented Features" - verify each claim
-- Provider comparison tables - keep if factual
-- Any section with superlatives
 
 ---
 
@@ -240,12 +265,14 @@ See GETTING_STARTED.md for detailed usage examples.
 Read these files to understand current state:
 
 1. **`OPEN_QUESTIONS.md`** - Original gap analysis
-2. **`IMPLEMENTATION_REPORT.md`** - How gaps were addressed
-3. **`TESTS_STATUS.md`** - Current test coverage
-4. **`PRODUCTION_PLAN.md`** - Remaining work (E2E testing)
-5. **`GETTING_STARTED.md`** - Usage examples
-6. **Current `README.md`** - What needs updating
-7. **`kosmos/execution/`** - Gap 4 implementation (Docker sandbox)
+2. **`OPENQUESTIONS_SOLUTION.md`** - How K-Dense packages addressed each gap
+3. **`IMPLEMENTATION_REPORT.md`** - Architecture decisions
+4. **`PRODUCTION_READINESS_REPORT.md`** - Current production status
+5. **`TESTS_STATUS.md`** - Test coverage details
+6. **`PRODUCTION_PLAN.md`** - Remaining work
+7. **`GETTING_STARTED.md`** - Usage examples
+8. **Current `README.md`** - What needs updating
+9. **`kosmos/execution/`** - Gap 4 implementation (Docker sandbox)
 
 ---
 
@@ -256,12 +283,13 @@ Produce a complete rewritten README.md that:
 1. Opens with a clear, factual description
 2. Links to the original paper
 3. Explains the gap analysis motivation
-4. Documents all 6 gaps as complete with pattern sources
-5. States next step is end-to-end testing
-6. Lists known limitations
-7. Provides practical getting started instructions
-8. Uses no emojis, exclamation points, or hype language
-9. Would satisfy a skeptical HN reader who clicks through
+4. Documents all 6 gaps as complete with K-Dense pattern sources
+5. Highlights Gap 4 (execution environment) as the final piece implemented
+6. States next step is end-to-end integration testing
+7. Lists known limitations honestly (from Production Readiness Report)
+8. Provides practical getting started instructions
+9. Uses no emojis, exclamation points, or hype language
+10. Would satisfy a skeptical HN reader who clicks through
 
 The README should make a technical reader think: "This is honest about what it does and doesn't do. I can evaluate it fairly."
 
@@ -279,5 +307,8 @@ The README should make a technical reader think: "This is honest about what it d
 > described in Lu et al. (2024). The original paper reported
 > 79.4% accuracy on scientific statements but omitted implementation
 > details for 6 critical components. This repository provides those
-> implementations. All 6 gaps are now complete. The next phase is
-> end-to-end integration testing.
+> implementations using patterns from the K-Dense ecosystem.
+> All 6 gaps are now complete. The final gap addressed was the
+> execution environment (Gap 4), which provides Docker-based
+> sandboxed code execution. The next phase is end-to-end
+> integration testing.
