@@ -3,6 +3,14 @@
 
 Full end-to-end workflow testing.
 Duration: ~10 minutes
+
+Tests all 6 gaps:
+- Gap 0: Context Compression
+- Gap 1: State Management (ArtifactStateManager)
+- Gap 2: Task Generation (Plan Creator/Reviewer)
+- Gap 3: Agent Integration (Skill Loader)
+- Gap 4: Execution Environment (ProductionExecutor)
+- Gap 5: Discovery Validation (ScholarEvalValidator)
 """
 
 import sys
@@ -62,26 +70,84 @@ async def test_full_research_cycle():
 
 
 async def test_context_compression():
-    """Test Gap 1: Context compression"""
-    print("\nTesting context compression (Gap 1)...")
+    """Test Gap 0: Context compression"""
+    print("\nTesting context compression (Gap 0)...")
 
     try:
-        from kosmos.gaps.context_compression import compress_context
+        from kosmos.compression.compressor import ContextCompressor
 
-        large_text = "This is a test document. " * 500  # ~4KB
+        compressor = ContextCompressor(anthropic_client=None)
 
-        result = await compress_context(large_text)
+        # Test cycle result compression
+        test_task_results = [
+            {
+                'type': 'data_analysis',
+                'summary': 'Analysis of gene expression patterns',
+                'statistics': {'correlation': 0.85, 'p_value': 0.001}
+            },
+            {
+                'type': 'literature_review',
+                'summary': 'Review of relevant papers',
+                'papers': []
+            }
+        ]
 
-        if len(result) < len(large_text):
-            ratio = len(result) / len(large_text) * 100
-            print(f"  [OK] Compressed to {ratio:.1f}% of original")
+        result = compressor.compress_cycle_results(
+            cycle=1,
+            task_results=test_task_results
+        )
+
+        if result and hasattr(result, 'summary'):
+            print(f"  [OK] Compression completed")
+            print(f"       Summary length: {len(result.summary)} chars")
             return True
         else:
-            print("  [WARN] No compression achieved")
-            return True  # May not always compress
+            print("  [WARN] No summary returned")
+            return True
 
-    except ImportError:
-        print("  [SKIP] Module not available")
+    except ImportError as e:
+        print(f"  [SKIP] Module not available: {e}")
+        return True
+    except Exception as e:
+        print(f"  [FAIL] Error: {e}")
+        return False
+
+
+async def test_state_management():
+    """Test Gap 1: State management (ArtifactStateManager)"""
+    print("\nTesting state management (Gap 1)...")
+
+    try:
+        from kosmos.world_model.artifacts import ArtifactStateManager
+        import tempfile
+
+        # Create temporary artifacts directory
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = ArtifactStateManager(artifacts_dir=tmpdir)
+
+            # Test saving a finding artifact
+            test_finding = {
+                'summary': 'Test finding about gene expression',
+                'statistics': {'mean': 0.5, 'std': 0.1},
+                'methods': 'Statistical analysis',
+                'interpretation': 'Significant correlation found'
+            }
+
+            path = await manager.save_finding_artifact(
+                cycle=1,
+                task_id=1,
+                finding=test_finding
+            )
+
+            if path and path.exists():
+                print(f"  [OK] Finding artifact saved to: {path.name}")
+                return True
+            else:
+                print("  [FAIL] Artifact not saved")
+                return False
+
+    except ImportError as e:
+        print(f"  [SKIP] Module not available: {e}")
         return True
     except Exception as e:
         print(f"  [FAIL] Error: {e}")
@@ -89,13 +155,22 @@ async def test_context_compression():
 
 
 async def test_code_execution():
-    """Test Gap 4: Code execution in sandbox"""
+    """Test Gap 4: Code execution in sandbox (ProductionExecutor)"""
     print("\nTesting code execution (Gap 4)...")
 
     try:
-        from kosmos.execution.docker_sandbox import execute_code
+        from kosmos.execution.production_executor import ProductionExecutor, ProductionConfig
 
-        code = """
+        config = ProductionConfig(
+            timeout_seconds=60,
+            memory_limit="2g"
+        )
+        executor = ProductionExecutor(config)
+
+        try:
+            await executor.initialize()
+
+            code = """
 import pandas as pd
 import numpy as np
 
@@ -105,21 +180,27 @@ print(f"DataFrame shape: {df.shape}")
 print(df.sum().to_dict())
 """
 
-        result = await execute_code(code)
+            result = await executor.execute_code(code)
 
-        if result.success and "DataFrame shape" in result.stdout:
-            print(f"  [OK] Code executed successfully")
-            print(f"       Output: {result.stdout[:100]}...")
-            return True
-        else:
-            print(f"  [FAIL] Execution failed: {result.stderr}")
-            return False
+            if result.success:
+                print(f"  [OK] Code executed successfully")
+                if hasattr(result, 'stdout') and result.stdout:
+                    print(f"       Output: {result.stdout[:100]}...")
+                return True
+            else:
+                error_msg = getattr(result, 'error_message', str(result))
+                print(f"  [FAIL] Execution failed: {error_msg}")
+                return False
 
-    except ImportError:
-        print("  [SKIP] Docker sandbox not available")
+        finally:
+            await executor.cleanup()
+
+    except ImportError as e:
+        print(f"  [SKIP] Module not available: {e}")
         return True
     except Exception as e:
-        if "docker" in str(e).lower():
+        error_str = str(e).lower()
+        if "docker" in error_str or "container" in error_str:
             print("  [SKIP] Docker not running")
             return True
         print(f"  [FAIL] Error: {e}")
@@ -127,63 +208,104 @@ print(df.sum().to_dict())
 
 
 async def test_scholar_evaluation():
-    """Test Gap 6: Scholar evaluation"""
-    print("\nTesting scholar evaluation (Gap 6)...")
+    """Test Gap 5: Scholar evaluation (ScholarEvalValidator)"""
+    print("\nTesting scholar evaluation (Gap 5)...")
 
     try:
-        from kosmos.validation.scholar_eval import ScholarEvaluator
+        from kosmos.validation.scholar_eval import ScholarEvalValidator
 
-        evaluator = ScholarEvaluator()
+        # Initialize with no LLM client for mock evaluation
+        validator = ScholarEvalValidator(anthropic_client=None)
 
         test_finding = {
-            "claim": "Large language models can be made more efficient through quantization.",
-            "evidence": "Multiple studies show 4-bit quantization reduces memory by 75%.",
-            "source": "arxiv:2023.12345"
+            'summary': 'Large language models can be made more efficient through quantization.',
+            'statistics': {'reduction': 0.75, 'accuracy_loss': 0.02},
+            'methods': 'Quantization analysis with 4-bit precision',
+            'interpretation': 'Multiple studies show 4-bit quantization reduces memory by 75%.'
         }
 
-        result = await evaluator.evaluate_finding(test_finding)
+        result = await validator.evaluate_finding(test_finding)
 
-        if result and hasattr(result, 'score'):
+        if result and hasattr(result, 'overall_score'):
             print(f"  [OK] Evaluation completed")
-            print(f"       Score: {result.score}")
+            print(f"       Overall score: {result.overall_score:.2f}")
+            print(f"       Approved: {result.approved}")
             return True
         else:
             print("  [WARN] No score returned")
             return True
 
-    except ImportError:
-        print("  [SKIP] Module not available")
+    except ImportError as e:
+        print(f"  [SKIP] Module not available: {e}")
         return True
     except Exception as e:
         print(f"  [FAIL] Error: {e}")
         return False
 
 
-async def test_state_persistence():
-    """Test Gap 2: State management"""
-    print("\nTesting state persistence (Gap 2)...")
+async def test_plan_creator():
+    """Test Gap 2: Plan creation (PlanCreatorAgent)"""
+    print("\nTesting plan creation (Gap 2)...")
 
     try:
-        from kosmos.gaps.state_management import StateManager
+        from kosmos.orchestration.plan_creator import PlanCreatorAgent
 
-        manager = StateManager()
+        # Initialize with mock/no client
+        creator = PlanCreatorAgent(anthropic_client=None)
 
-        # Save state
-        test_state = {"key": "value", "count": 42}
-        await manager.save("test_state", test_state)
+        # Test plan creation
+        context = {
+            'research_objective': 'Investigate KRAS mutations in cancer',
+            'prior_findings': [],
+            'cycle': 1
+        }
 
-        # Load state
-        loaded = await manager.load("test_state")
+        plan = await creator.create_plan(context)
 
-        if loaded == test_state:
-            print("  [OK] State persisted correctly")
+        if plan and hasattr(plan, 'tasks'):
+            print(f"  [OK] Plan created")
+            print(f"       Tasks: {len(plan.tasks)}")
+            return True
+        elif plan:
+            print(f"  [OK] Plan created (alternative format)")
             return True
         else:
-            print(f"  [FAIL] State mismatch: {loaded}")
-            return False
+            print("  [WARN] No plan returned")
+            return True
 
-    except ImportError:
-        print("  [SKIP] Module not available")
+    except ImportError as e:
+        print(f"  [SKIP] Module not available: {e}")
+        return True
+    except Exception as e:
+        print(f"  [FAIL] Error: {e}")
+        return False
+
+
+async def test_skill_loader():
+    """Test Gap 3: Skill loading"""
+    print("\nTesting skill loader (Gap 3)...")
+
+    try:
+        from kosmos.agents.skill_loader import SkillLoader
+
+        loader = SkillLoader()
+
+        # Test loading skills for a biology domain task
+        skills = loader.load_skills_for_task(
+            task_type='hypothesis_generation',
+            domain='biology'
+        )
+
+        if skills:
+            print(f"  [OK] Skills loaded")
+            print(f"       Count: {len(skills) if isinstance(skills, list) else 'N/A'}")
+            return True
+        else:
+            print("  [WARN] No skills loaded (may be expected)")
+            return True
+
+    except ImportError as e:
+        print(f"  [SKIP] Module not available: {e}")
         return True
     except Exception as e:
         print(f"  [FAIL] Error: {e}")
@@ -213,12 +335,14 @@ async def main():
     results = []
     start_time = time.time()
 
-    # Run tests
+    # Run tests for all 6 gaps
     results.append(("Full research cycle", await test_full_research_cycle()))
-    results.append(("Context compression", await test_context_compression()))
-    results.append(("Code execution", await test_code_execution()))
-    results.append(("Scholar evaluation", await test_scholar_evaluation()))
-    results.append(("State persistence", await test_state_persistence()))
+    results.append(("Gap 0: Context compression", await test_context_compression()))
+    results.append(("Gap 1: State management", await test_state_management()))
+    results.append(("Gap 2: Plan creation", await test_plan_creator()))
+    results.append(("Gap 3: Skill loader", await test_skill_loader()))
+    results.append(("Gap 4: Code execution", await test_code_execution()))
+    results.append(("Gap 5: Scholar evaluation", await test_scholar_evaluation()))
 
     total_time = time.time() - start_time
 

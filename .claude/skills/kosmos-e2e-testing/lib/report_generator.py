@@ -193,6 +193,223 @@ def compare_results(results_list: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def generate_dependency_report(
+    project_root: str = ".",
+    output_path: Optional[str] = None
+) -> str:
+    """Generate a comprehensive dependency analysis report
+
+    Scans for missing dependencies and generates E2E_TESTING_DEPENDENCY_REPORT.md
+
+    Args:
+        project_root: Path to project root
+        output_path: Optional output path (default: E2E_TESTING_DEPENDENCY_REPORT.md)
+
+    Returns:
+        Report content as string
+    """
+    from pathlib import Path
+    import os
+    import sys
+
+    # Import provider_detector for infrastructure checks
+    try:
+        from .provider_detector import (
+            detect_all, check_python_packages, check_python_version,
+            get_service_matrix
+        )
+    except ImportError:
+        from provider_detector import (
+            detect_all, check_python_packages, check_python_version,
+            get_service_matrix
+        )
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    detection = detect_all()
+    packages = check_python_packages()
+    py_version = check_python_version()
+    service_matrix = get_service_matrix()
+
+    lines = [
+        "# E2E Testing Dependency Report",
+        "",
+        f"**Generated:** {timestamp}",
+        f"**Python Version:** {py_version['version']}",
+        "",
+        "---",
+        "",
+        "## Executive Summary",
+        "",
+    ]
+
+    # Count issues
+    package_issues = sum(1 for pkg, (avail, _) in packages.items() if not avail)
+    service_issues = sum(1 for key in ['neo4j', 'redis', 'chromadb'] if not detection.get(key, False))
+    config_issues = sum(1 for key in ['anthropic', 'openai'] if not detection.get(key, False))
+
+    lines.extend([
+        f"- **Package Issues:** {package_issues}",
+        f"- **Service Issues:** {service_issues}",
+        f"- **Configuration Issues:** {config_issues}",
+        f"- **Python Warnings:** {len(py_version['warnings'])}",
+        "",
+        "---",
+        "",
+        "## Section 1: Python Package Issues",
+        "",
+        "| Package | Status | Error |",
+        "|---------|--------|-------|",
+    ])
+
+    for pkg, (available, error) in packages.items():
+        status = "OK" if available else "MISSING"
+        error_msg = error[:50] + "..." if error and len(error) > 50 else (error or "-")
+        lines.append(f"| {pkg} | {status} | {error_msg} |")
+
+    if py_version['warnings']:
+        lines.extend([
+            "",
+            "### Python Version Warnings",
+            "",
+        ])
+        for warning in py_version['warnings']:
+            lines.append(f"- {warning}")
+
+    lines.extend([
+        "",
+        "---",
+        "",
+        "## Section 2: External Service Requirements",
+        "",
+        "| Service | Status | Required For |",
+        "|---------|--------|--------------|",
+    ])
+
+    services = [
+        ("Ollama", detection['ollama'], "Local LLM testing"),
+        ("Docker", detection['docker'], "Sandboxed execution (Gap 4)"),
+        ("Docker Sandbox", detection['docker_sandbox'], "Production executor"),
+        ("Neo4j", detection.get('neo4j', False), "Knowledge graph"),
+        ("Redis", detection.get('redis', False), "Distributed caching"),
+        ("ChromaDB", detection.get('chromadb', False), "Vector embeddings"),
+        ("SQLite", detection['database'], "Data persistence"),
+    ]
+
+    for name, status, purpose in services:
+        status_str = "OK" if status else "NOT CONFIGURED"
+        lines.append(f"| {name} | {status_str} | {purpose} |")
+
+    lines.extend([
+        "",
+        "---",
+        "",
+        "## Section 3: Configuration Gaps",
+        "",
+        "| Variable | Status | Description |",
+        "|----------|--------|-------------|",
+    ])
+
+    config_vars = [
+        ("ANTHROPIC_API_KEY", detection['anthropic'], "Anthropic LLM provider"),
+        ("OPENAI_API_KEY", detection['openai'], "OpenAI/Ollama provider"),
+        ("NEO4J_URI", detection.get('neo4j', False), "Neo4j connection"),
+        ("REDIS_URL", detection.get('redis', False), "Redis connection"),
+        ("SEMANTIC_SCHOLAR_API_KEY", detection.get('semantic_scholar', False), "Literature search API"),
+    ]
+
+    for var, status, desc in config_vars:
+        status_str = "SET" if status else "NOT SET"
+        lines.append(f"| {var} | {status_str} | {desc} |")
+
+    lines.extend([
+        "",
+        "---",
+        "",
+        "## Section 4: Service Availability Matrix",
+        "",
+        "| Test Category | Anthropic | Docker | Neo4j | Redis | ChromaDB |",
+        "|---------------|-----------|--------|-------|-------|----------|",
+    ])
+
+    for category, requirements in service_matrix.items():
+        row = f"| {category} |"
+        for service in ['anthropic', 'docker', 'neo4j', 'redis', 'chromadb']:
+            row += f" {requirements.get(service, 'N/A')} |"
+        lines.append(row)
+
+    lines.extend([
+        "",
+        "---",
+        "",
+        "## Section 5: Remediation Strategy",
+        "",
+        "### Tier 1: Quick Wins (< 1 day)",
+        "",
+    ])
+
+    quick_wins = []
+    if not detection['ollama']:
+        quick_wins.append("- Install and start Ollama: `ollama serve`")
+    if package_issues > 0:
+        quick_wins.append("- Install missing packages: `pip install -e \".[dev]\"`")
+    if not detection['anthropic'] and not detection['openai']:
+        quick_wins.append("- Set API key: `export ANTHROPIC_API_KEY=sk-ant-...`")
+
+    lines.extend(quick_wins if quick_wins else ["- No quick wins identified"])
+
+    lines.extend([
+        "",
+        "### Tier 2: Medium Effort (1-3 days)",
+        "",
+    ])
+
+    medium_effort = []
+    if not detection['docker_sandbox']:
+        medium_effort.append("- Build Docker sandbox: `./scripts/setup-docker.sh`")
+    if not detection.get('neo4j', False):
+        medium_effort.append("- Set up Neo4j: `docker run neo4j:latest`")
+
+    lines.extend(medium_effort if medium_effort else ["- No medium effort items identified"])
+
+    lines.extend([
+        "",
+        "### Tier 3: Significant Work (> 3 days)",
+        "",
+        "- Replace incompatible packages (e.g., arxiv on Python 3.11+)",
+        "- Implement missing async features",
+        "- Refactor for better test isolation",
+        "",
+        "---",
+        "",
+        "## Recommended Test Tier",
+        "",
+    ])
+
+    from .provider_detector import recommend_test_tier, recommend_provider
+    tier = recommend_test_tier(detection)
+    provider = recommend_provider(detection)
+
+    lines.extend([
+        f"Based on current infrastructure: **{tier}**",
+        f"",
+        f"Recommended provider: **{provider}**",
+        "",
+        "---",
+        "",
+        "*Generated by Kosmos E2E Testing Skill*",
+    ])
+
+    report = "\n".join(lines)
+
+    if output_path is None:
+        output_path = Path(project_root) / "E2E_TESTING_DEPENDENCY_REPORT.md"
+
+    Path(output_path).write_text(report)
+    print(f"Dependency report saved to: {output_path}")
+
+    return report
+
+
 if __name__ == "__main__":
     # Demo with sample results
     sample_results = {
@@ -208,3 +425,7 @@ if __name__ == "__main__":
     }
 
     print(generate_report(sample_results, format="text"))
+
+    # Also generate dependency report
+    print("\n" + "=" * 60 + "\n")
+    generate_dependency_report()

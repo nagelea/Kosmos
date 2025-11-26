@@ -144,6 +144,42 @@ def validate_config(provider: str) -> tuple[bool, list[str]]
 | `KOSMOS_SANDBOX_IMAGE` | Docker image name | `kosmos-sandbox:latest` |
 | `KOSMOS_ARTIFACTS_DIR` | Test artifact directory | `./test_artifacts` |
 
+### Database Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATABASE_URL` | Database connection URL | `sqlite:///kosmos.db` |
+| `NEO4J_URI` | Neo4j connection URI | - |
+| `NEO4J_USER` | Neo4j username | `neo4j` |
+| `NEO4J_PASSWORD` | Neo4j password | - |
+| `REDIS_URL` | Redis connection URL | - |
+| `CHROMA_PERSIST_DIRECTORY` | ChromaDB persist dir | `./chroma_db` |
+
+### External API Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SEMANTIC_SCHOLAR_API_KEY` | Semantic Scholar API | - |
+
+### Execution Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ENABLE_SANDBOXING` | Enable Docker sandbox | `true` |
+| `MAX_EXPERIMENT_EXECUTION_TIME` | Max exec time (sec) | `300` |
+| `ENABLE_CONCURRENT_OPERATIONS` | Enable concurrency | `false` |
+| `MAX_CONCURRENT_EXPERIMENTS` | Max parallel execs | `4` |
+
+### Research Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MAX_RESEARCH_ITERATIONS` | Max iterations | `10` |
+| `RESEARCH_BUDGET_USD` | Budget limit | `10.0` |
+| `ENABLED_DOMAINS` | Active domains | `biology,physics,...` |
+| `MIN_NOVELTY_SCORE` | Min novelty score | `0.6` |
+| `TEST_MODE` | Enable test mode | `false` |
+
 ---
 
 ## Test Markers
@@ -158,6 +194,9 @@ def validate_config(provider: str) -> tuple[bool, list[str]]
 | `@pytest.mark.unit` | Unit tests | Fast, isolated |
 | `@pytest.mark.integration` | Integration tests | Component interaction |
 | `@pytest.mark.smoke` | Smoke tests | Basic functionality |
+| `@pytest.mark.requires_api_key` | Requires LLM API key | Real LLM calls |
+| `@pytest.mark.requires_neo4j` | Requires Neo4j | Knowledge graph tests |
+| `@pytest.mark.requires_claude` | Requires Anthropic | Claude-specific tests |
 
 ### Marker Combinations
 
@@ -173,6 +212,12 @@ pytest -m docker
 
 # Run integration but not E2E
 pytest -m "integration and not e2e"
+
+# Skip tests requiring API keys
+pytest -m "not requires_api_key"
+
+# Run only tests that work without external services
+pytest -m "not (docker or requires_neo4j or requires_api_key)"
 ```
 
 ---

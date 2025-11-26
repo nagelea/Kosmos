@@ -31,6 +31,12 @@ TIER_CONFIG = {
         "timeout": 300,
         "description": "Unit + smoke tests (~2min)",
     },
+    "integration": {
+        "paths": ["tests/integration/"],
+        "markers": "integration",
+        "timeout": 600,
+        "description": "Integration tests (~5min)",
+    },
     "e2e": {
         "paths": ["tests/e2e/"],
         "markers": "e2e",

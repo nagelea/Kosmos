@@ -183,6 +183,33 @@ print(f"Passed: {results['passed']}/{results['total']}")
     └── report_generator.py
 ```
 
+## Service Availability Matrix
+
+| Test Category | Anthropic | Docker | Neo4j | Redis | ChromaDB |
+|---------------|-----------|--------|-------|-------|----------|
+| Unit (gap modules) | Mock | No | No | No | No |
+| Unit (literature) | Mock | No | No | No | No |
+| Unit (knowledge) | Mock | No | Yes | No | Yes |
+| Unit (execution) | No | Yes | No | No | No |
+| Integration | Real/Mock | No | Mock | Mock | Mock |
+| E2E | Real | Yes | Optional | Optional | Optional |
+
+## Known Issues & Limitations
+
+1. **arxiv package incompatibility**: Fails on Python 3.11+ due to `sgmllib3k` dependency. Literature search features limited.
+
+2. **Docker requirement**: Gap 4 execution environment requires Docker. Without it, code execution uses mock/direct implementations.
+
+3. **Database model issues**: Some tests skip due to "Hypothesis model ID missing autoincrement=True" - model definition issue.
+
+4. **Complex agent setup**: Some agents (ExperimentDesigner, DataAnalyst) require complex object initialization.
+
+5. **API mismatches**: Some integration tests have API mismatches with current implementation.
+
+6. **No R support**: Paper references R packages; implementation is Python-only.
+
+7. **Single-user**: No multi-tenancy or user isolation.
+
 ## Troubleshooting
 
 ### Ollama Not Responding
@@ -229,6 +256,26 @@ cat .env | grep API_KEY
 
 # Re-source config
 source .claude/skills/kosmos-e2e-testing/configs/anthropic.env
+```
+
+### Python 3.11+ Package Issues
+```bash
+# If arxiv package fails
+# Option 1: Use mock for literature search
+export MOCK_LITERATURE_SEARCH=true
+
+# Option 2: Install alternative client
+pip install arxiv-python
+
+# Option 3: Pin Python to 3.10
+pyenv install 3.10.12
+pyenv local 3.10.12
+```
+
+### Generate Dependency Report
+```bash
+# Generate E2E_TESTING_DEPENDENCY_REPORT.md
+python -c "from lib.report_generator import generate_dependency_report; generate_dependency_report()"
 ```
 
 ## See Also

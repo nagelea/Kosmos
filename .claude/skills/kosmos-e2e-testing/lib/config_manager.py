@@ -143,6 +143,51 @@ def list_providers() -> list[str]:
     return sorted(providers)
 
 
+# All environment variables that can affect testing
+ALL_ENV_VARS = {
+    # LLM Providers
+    "LLM_PROVIDER": "LLM provider (anthropic, openai)",
+    "ANTHROPIC_API_KEY": "Anthropic API key",
+    "ANTHROPIC_MODEL": "Anthropic model name",
+    "OPENAI_API_KEY": "OpenAI API key",
+    "OPENAI_BASE_URL": "OpenAI API base URL (for Ollama)",
+    "OPENAI_MODEL": "OpenAI/Ollama model name",
+
+    # Databases
+    "DATABASE_URL": "Database connection URL",
+    "NEO4J_URI": "Neo4j connection URI",
+    "NEO4J_USER": "Neo4j username",
+    "NEO4J_PASSWORD": "Neo4j password",
+    "REDIS_URL": "Redis connection URL",
+    "CHROMA_PERSIST_DIRECTORY": "ChromaDB persistence directory",
+
+    # External APIs
+    "SEMANTIC_SCHOLAR_API_KEY": "Semantic Scholar API key",
+
+    # Execution
+    "ENABLE_SANDBOXING": "Enable Docker sandboxing",
+    "MAX_EXPERIMENT_EXECUTION_TIME": "Max execution time (seconds)",
+
+    # Research Configuration
+    "MAX_RESEARCH_ITERATIONS": "Max research iterations",
+    "RESEARCH_BUDGET_USD": "Research budget limit",
+    "ENABLED_DOMAINS": "Enabled research domains",
+    "MIN_NOVELTY_SCORE": "Minimum novelty score",
+
+    # Performance
+    "ENABLE_CONCURRENT_OPERATIONS": "Enable concurrent operations",
+    "MAX_CONCURRENT_EXPERIMENTS": "Max concurrent experiments",
+    "PARALLEL_EXPERIMENTS": "Number of parallel experiments",
+
+    # Testing
+    "TEST_MODE": "Enable test mode",
+    "KOSMOS_TEST_TIMEOUT": "Test timeout (seconds)",
+    "KOSMOS_TEST_TIER": "Default test tier",
+    "KOSMOS_SANDBOX_IMAGE": "Docker sandbox image name",
+    "KOSMOS_ARTIFACTS_DIR": "Test artifacts directory",
+}
+
+
 def print_config(provider: Optional[str] = None) -> None:
     """Print configuration details
 
@@ -165,18 +210,60 @@ def print_config(provider: Optional[str] = None) -> None:
                 display_value = value
             print(f"  {key}={display_value}")
     except FileNotFoundError:
-        # Show current environment
+        # Show current environment - use comprehensive list
         relevant_vars = [
             "LLM_PROVIDER", "OPENAI_API_KEY", "OPENAI_BASE_URL",
-            "OPENAI_MODEL", "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL"
+            "OPENAI_MODEL", "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL",
+            "DATABASE_URL", "NEO4J_URI", "REDIS_URL",
+            "ENABLE_SANDBOXING", "TEST_MODE"
         ]
         for var in relevant_vars:
             value = os.environ.get(var, "")
             if "KEY" in var and value:
                 display_value = value[:8] + "..." if len(value) > 8 else "***"
+            elif "PASSWORD" in var and value:
+                display_value = "***"
             else:
                 display_value = value or "(not set)"
             print(f"  {var}={display_value}")
+
+
+def print_full_config() -> None:
+    """Print all environment variables that affect testing"""
+    print("Full Environment Configuration")
+    print("=" * 60)
+
+    # Group by category
+    categories = {
+        "LLM Providers": ["LLM_PROVIDER", "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL",
+                         "OPENAI_API_KEY", "OPENAI_BASE_URL", "OPENAI_MODEL"],
+        "Databases": ["DATABASE_URL", "NEO4J_URI", "NEO4J_USER", "NEO4J_PASSWORD",
+                     "REDIS_URL", "CHROMA_PERSIST_DIRECTORY"],
+        "External APIs": ["SEMANTIC_SCHOLAR_API_KEY"],
+        "Execution": ["ENABLE_SANDBOXING", "MAX_EXPERIMENT_EXECUTION_TIME"],
+        "Research": ["MAX_RESEARCH_ITERATIONS", "RESEARCH_BUDGET_USD",
+                    "ENABLED_DOMAINS", "MIN_NOVELTY_SCORE"],
+        "Performance": ["ENABLE_CONCURRENT_OPERATIONS", "MAX_CONCURRENT_EXPERIMENTS",
+                       "PARALLEL_EXPERIMENTS"],
+        "Testing": ["TEST_MODE", "KOSMOS_TEST_TIMEOUT", "KOSMOS_TEST_TIER",
+                   "KOSMOS_SANDBOX_IMAGE", "KOSMOS_ARTIFACTS_DIR"],
+    }
+
+    for category, vars in categories.items():
+        print(f"\n[{category}]")
+        for var in vars:
+            value = os.environ.get(var, "")
+            desc = ALL_ENV_VARS.get(var, "")
+
+            # Mask sensitive values
+            if ("KEY" in var or "PASSWORD" in var) and value:
+                display_value = value[:8] + "..." if len(value) > 8 else "***"
+            else:
+                display_value = value or "(not set)"
+
+            print(f"  {var}={display_value}")
+            if desc:
+                print(f"    # {desc}")
 
 
 if __name__ == "__main__":
